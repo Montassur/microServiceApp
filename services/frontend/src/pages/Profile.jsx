@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { userAPI } from '../api/client'; // Assuming userAPI is exported from client.js
+import { userAPI } from '../api/client';
 
 function Profile() {
-    const { user, login } = useAuth(); // login function might be needed to update local user state if profile changes
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -13,20 +11,19 @@ function Profile() {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await userAPI.getProfile();
+                const { firstName, lastName, email } = res.data.data;
+                setFormData({ firstName, lastName, email });
+                setLoading(false);
+            } catch (err) {
+                console.error('Failed to fetch profile', err);
+                setLoading(false);
+            }
+        };
         fetchProfile();
     }, []);
-
-    const fetchProfile = async () => {
-        try {
-            const res = await userAPI.getProfile();
-            const { firstName, lastName, email } = res.data.data;
-            setFormData({ firstName, lastName, email });
-            setLoading(false);
-        } catch (err) {
-            console.error('Failed to fetch profile', err);
-            setLoading(false);
-        }
-    };
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,12 +33,11 @@ function Profile() {
         e.preventDefault();
         setMessage('');
         try {
-            const res = await userAPI.updateProfile({
+            await userAPI.updateProfile({
                 firstName: formData.firstName,
                 lastName: formData.lastName
             });
             setMessage('Profile updated successfully!');
-            // Optionally update context user state here if needed
         } catch (err) {
             console.error('Failed to update profile', err);
             setMessage('Failed to update profile.');

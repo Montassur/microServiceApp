@@ -133,7 +133,7 @@ function Users() {
             toast.success(`${selectedUsers.length} user(s) deleted successfully`);
             setSelectedUsers([]);
             fetchUsers();
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete some users');
         }
     };

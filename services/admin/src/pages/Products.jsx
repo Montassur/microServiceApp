@@ -66,7 +66,7 @@ function Products() {
             }
             fetchProducts();
             setFormData({ name: '', description: '', price: '', category: '', stock: '', image_url: '' });
-        } catch (error) {
+        } catch {
             toast.error('Operation failed');
         }
     };
@@ -77,7 +77,7 @@ function Products() {
             await productAPI.delete(id);
             toast.success('Product deleted');
             fetchProducts();
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete');
         }
     };

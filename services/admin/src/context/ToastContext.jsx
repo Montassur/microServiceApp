@@ -1,12 +1,14 @@
-import { createContext, useContext, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useRef, useState } from 'react';
 
 const ToastContext = createContext(null);
 
 export const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
+    const nextId = useRef(0);
 
     const showToast = (message, type = 'info', title = '') => {
-        const id = Date.now();
+        const id = ++nextId.current;
         const toast = { id, message, type, title };
 
         setToasts(prev => [...prev, toast]);

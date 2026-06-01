@@ -145,5 +145,10 @@ jobs:
       - name: Dry-run development overlay
         run: kubectl kustomize infrastructure/k8s/overlays/development > /tmp/dev.yaml
 
+      - name: Stub production secrets for validation only
+        # Real prod secrets stay gitignored — copy the .example so kustomize
+        # can render the manifests in CI. CI never deploys these values.
+        run: cp infrastructure/k8s/overlays/production/secrets.env.example infrastructure/k8s/overlays/production/secrets.env
+
       - name: Dry-run production overlay
         run: kubectl kustomize infrastructure/k8s/overlays/production > /tmp/prod.yaml

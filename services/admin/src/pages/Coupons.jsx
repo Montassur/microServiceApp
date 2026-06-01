@@ -6,7 +6,7 @@ import './Users.css';
 function Coupons() {
     const toast = useToast();
     const [coupons, setCoupons] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ code: '', discountType: 'percentage', value: '', expirationDate: '', usageLimit: '' });
 
@@ -19,7 +19,7 @@ function Coupons() {
             setLoading(true);
             const response = await couponAPI.getAll();
             setCoupons(response.data);
-        } catch (error) {
+        } catch {
             // console.error(error);
         } finally {
             setLoading(false);
@@ -33,7 +33,7 @@ function Coupons() {
             toast.success('Coupon created');
             setShowModal(false);
             fetchCoupons();
-        } catch (error) {
+        } catch {
             toast.error('Failed to create coupon');
         }
     };
@@ -44,7 +44,7 @@ function Coupons() {
             await couponAPI.delete(id);
             toast.success('Coupon deleted');
             fetchCoupons();
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete coupon');
         }
     };

@@ -1,6 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useContext, useEffect } from 'react';
 import { cartAPI } from '../api/cart';
-import { useAuth } from './AuthContext'; // Assuming AuthContext exists
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
 
@@ -9,27 +10,27 @@ export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState({ items: [], total: 0 });
     const [loading, setLoading] = useState(false);
 
-    // Fetch cart on load if user is logged in
+    // Fetch cart on load if user is logged in; clear when user logs out.
     useEffect(() => {
-        if (user) {
-            fetchCart();
-        } else {
+        if (!user) {
+            // Reset on logout — legitimate sync with external (auth) state.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCart({ items: [], total: 0 });
+            return;
         }
+        const fetchCart = async () => {
+            try {
+                setLoading(true);
+                const res = await cartAPI.getCart(user.id);
+                setCart(res.data);
+                setLoading(false);
+            } catch (err) {
+                console.error('Failed to fetch cart', err);
+                setLoading(false);
+            }
+        };
+        fetchCart();
     }, [user]);
-
-    const fetchCart = async () => {
-        if (!user) return;
-        try {
-            setLoading(true);
-            const res = await cartAPI.getCart(user.id);
-            setCart(res.data);
-            setLoading(false);
-        } catch (err) {
-            console.error('Failed to fetch cart', err);
-            setLoading(false);
-        }
-    };
 
     const addToCart = async (product, quantity = 1) => {
         if (!user) {

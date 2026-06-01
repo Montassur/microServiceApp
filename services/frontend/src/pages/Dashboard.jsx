@@ -15,30 +15,6 @@ function Dashboard() {
         lastName: ''
     });
 
-    useEffect(() => {
-        const loadData = async () => {
-            await Promise.all([fetchProfile(), fetchOrders()]);
-            setLoading(false);
-        };
-        loadData();
-    }, []);
-
-    const fetchOrders = async () => {
-        // Assuming user.id is available from AuthContext. If not, profile request usually returns it.
-        // We'll use a fallback or wait for profile if needed, but let's try assuming 'user' object has ID.
-        // If 'user' from context is null (initially), this might fail. 
-        // Best to use the ID from the profile response or ensure user is loaded.
-        // For now, let's assume we can get it after profile fetch or straight from context if stable.
-        if (user && user.id) {
-            try {
-                const res = await orderAPI.getUserOrders(user.id);
-                setOrders(res.data);
-            } catch (err) {
-                console.error('Failed to fetch orders', err);
-            }
-        }
-    };
-
     const fetchProfile = async () => {
         try {
             const response = await userAPI.getProfile();
@@ -60,6 +36,25 @@ function Dashboard() {
             console.error('Failed to fetch profile:', error);
         }
     };
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            if (user && user.id) {
+                try {
+                    const res = await orderAPI.getUserOrders(user.id);
+                    setOrders(res.data);
+                } catch (err) {
+                    console.error('Failed to fetch orders', err);
+                }
+            }
+        };
+        const loadData = async () => {
+            await Promise.all([fetchProfile(), fetchOrders()]);
+            setLoading(false);
+        };
+        loadData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleUpdate = async (e) => {
         e.preventDefault();

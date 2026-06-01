@@ -5,7 +5,7 @@ import './Navbar.css';
 
 function Navbar() {
     const location = useLocation();
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, logout } = useAuth();
     const { cart } = useCart();
 
     const isActive = (path) => location.pathname === path;

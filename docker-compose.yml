@@ -36,16 +36,16 @@ services:
     image: postgres:17.2-alpine
     container_name: database
     environment:
-      POSTGRES_USER: auraweb_user
+      POSTGRES_USER: ecommerce_user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: auraweb_db
+      POSTGRES_DB: ecommerce_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U auraweb_user -d auraweb_db"]
+      test: ["CMD-SHELL", "pg_isready -U ecommerce_user -d ecommerce_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -137,8 +137,8 @@ services:
       - PORT=3001
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_NAME=auraweb_db
-      - DB_USER=auraweb_user
+      - DB_NAME=ecommerce_db
+      - DB_USER=ecommerce_user
       - DB_PASSWORD=password
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://rabbitmq:5672
@@ -167,8 +167,8 @@ services:
       - PORT=3006
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_NAME=auraweb_db
-      - DB_USER=auraweb_user
+      - DB_NAME=ecommerce_db
+      - DB_USER=ecommerce_user
       - DB_PASSWORD=password
       - RABBITMQ_URL=amqp://rabbitmq:5672
     healthcheck:
@@ -194,8 +194,8 @@ services:
       - PORT=3004
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_NAME=auraweb_db
-      - DB_USER=auraweb_user
+      - DB_NAME=ecommerce_db
+      - DB_USER=ecommerce_user
       - DB_PASSWORD=password
       - REDIS_HOST=redis
     healthcheck:
@@ -221,8 +221,8 @@ services:
       - PORT=3002
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_NAME=auraweb_db
-      - DB_USER=auraweb_user
+      - DB_NAME=ecommerce_db
+      - DB_USER=ecommerce_user
       - DB_PASSWORD=password
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
@@ -249,8 +249,8 @@ services:
       - PORT=3003
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_NAME=auraweb_db
-      - DB_USER=auraweb_user
+      - DB_NAME=ecommerce_db
+      - DB_USER=ecommerce_user
       - DB_PASSWORD=password
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://rabbitmq:5672
@@ -279,8 +279,8 @@ services:
       - PORT=3000
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_NAME=auraweb_db
-      - DB_USER=auraweb_user
+      - DB_NAME=ecommerce_db
+      - DB_USER=ecommerce_user
       - DB_PASSWORD=password
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://rabbitmq:5672
@@ -310,8 +310,8 @@ services:
       - PORT=3005
       - DB_HOST=database
       - DB_PORT=5432
-      - DB_NAME=auraweb_db
-      - DB_USER=auraweb_user
+      - DB_NAME=ecommerce_db
+      - DB_USER=ecommerce_user
       - DB_PASSWORD=password
       - AMQP_URL=amqp://rabbitmq:5672
       - AWS_ACCESS_KEY_ID=minio

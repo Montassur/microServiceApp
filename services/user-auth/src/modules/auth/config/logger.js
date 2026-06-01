@@ -37,7 +37,7 @@ const logger = winston.createLogger({
     level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
     format: logFormat,
     defaultMeta: {
-        service: 'auraweb-backend',
+        service: 'ecommerce-backend',
         environment: process.env.NODE_ENV
     },
     transports: []

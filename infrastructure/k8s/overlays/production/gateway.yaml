@@ -1,8 +1,8 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: auraweb-gateway
-  namespace: auraweb-prod
+  name: ecommerce-gateway
+  namespace: ecommerce-prod
 spec:
   gatewayClassName: eg
   listeners:
@@ -16,11 +16,11 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: auraweb-routes
-  namespace: auraweb-prod
+  name: ecommerce-routes
+  namespace: ecommerce-prod
 spec:
   parentRefs:
-  - name: auraweb-gateway
+  - name: ecommerce-gateway
   rules:
   # Global Security Headers (Applied to all responses via repeats or specific policies, 
   # here applied per rule for standard compliance)

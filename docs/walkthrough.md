@@ -88,7 +88,7 @@ docker compose ps
 
 ### 5. Default Credentials
 
-- **Email**: `admin@auraweb.com`
+- **Email**: `admin@ecommerce.com`
 - **Password**: `Admin@123`
 
 > **⚠️ Warning**: Change these credentials immediately in production!

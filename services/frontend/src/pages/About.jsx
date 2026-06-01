@@ -18,7 +18,7 @@ function About() {
     return (
         <div className="about-page">
             <div className="about-hero glass-card">
-                <h1>About AuraWeb</h1>
+                <h1>About Ecommerce</h1>
                 <p className="hero-subtitle">
                     Building the future of web development, one innovation at a time
                 </p>
@@ -37,7 +37,7 @@ function About() {
                 <div className="glass-card">
                     <h2>Our Mission</h2>
                     <p>
-                        At AuraWeb, we're committed to delivering cutting-edge web solutions that empower
+                        At Ecommerce, we're committed to delivering cutting-edge web solutions that empower
                         businesses to thrive in the digital age. Our mission is to make advanced technology
                         accessible, reliable, and beautiful.
                     </p>

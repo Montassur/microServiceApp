@@ -27,7 +27,7 @@ function Contact() {
     };
 
     const contactInfo = [
-        { icon: '📧', label: 'Email', value: 'hello@auraweb.com' },
+        { icon: '📧', label: 'Email', value: 'hello@ecommerce.com' },
         { icon: '📞', label: 'Phone', value: '+1 (555) 123-4567' },
         { icon: '📍', label: 'Address', value: '123 Tech Street, San Francisco, CA 94105' },
         { icon: '🕐', label: 'Hours', value: 'Mon-Fri: 9AM - 6PM PST' }

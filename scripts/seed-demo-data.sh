@@ -8,7 +8,7 @@
 echo "🌱 Seeding demo data into database..."
 
 # Run the SQL seed script
-docker compose exec -T database psql -U auraweb_user -d auraweb_db < database/seed_demo_data.sql
+docker compose exec -T database psql -U ecommerce_user -d ecommerce_db < database/seed_demo_data.sql
 
 if [ $? -eq 0 ]; then
     echo ""
@@ -27,7 +27,7 @@ if [ $? -eq 0 ]; then
     echo "   • Audit logs"
     echo ""
     echo "🔐 Test Credentials:"
-    echo "   Email: admin@auraweb.com"
+    echo "   Email: admin@ecommerce.com"
     echo "   Password: Admin@123"
     echo ""
     echo "🌐 Access your app:"

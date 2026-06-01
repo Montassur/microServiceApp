@@ -91,13 +91,13 @@
   ],
   "refresh": "10s",
   "schemaVersion": 39,
-  "tags": ["auraweb"],
+  "tags": ["ecommerce"],
   "templating": {"list": []},
   "time": {"from": "now-30m", "to": "now"},
   "timepicker": {},
   "timezone": "",
-  "title": "AuraWeb Microservices Overview",
-  "uid": "auraweb-services",
+  "title": "Ecommerce Microservices Overview",
+  "uid": "ecommerce-services",
   "version": 1,
   "weekStart": ""
 }

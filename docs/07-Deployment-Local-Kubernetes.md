@@ -155,7 +155,7 @@ minikube ip
 curl http://$(minikube ip)
 
 # Or use service
-minikube service gateway -n auraweb-local
+minikube service gateway -n ecommerce-local
 
 # Or tunnel
 minikube tunnel
@@ -166,7 +166,7 @@ minikube tunnel
 
 ```bash
 # Port forward
-kubectl port-forward -n auraweb-local svc/gateway 8080:80
+kubectl port-forward -n ecommerce-local svc/gateway 8080:80
 
 # Access
 curl http://localhost:8080
@@ -189,7 +189,7 @@ curl http://localhost:8080
 ./scripts/deploy-k8s-local.sh minikube logs
 
 # Specific service
-kubectl logs -f -l app=backend -n auraweb-local
+kubectl logs -f -l app=backend -n ecommerce-local
 ```
 
 ### Restart Services
@@ -268,12 +268,12 @@ services:
 vim backend/src/app.js
 
 # Rebuild and redeploy backend only
-docker build -t auraweb/backend:local ./backend
-minikube image load auraweb/backend:local
-kubectl rollout restart deployment/dev-backend -n auraweb-local
+docker build -t ecommerce/backend:local ./backend
+minikube image load ecommerce/backend:local
+kubectl rollout restart deployment/dev-backend -n ecommerce-local
 
 # View logs
-kubectl logs -f -l app=backend -n auraweb-local
+kubectl logs -f -l app=backend -n ecommerce-local
 ```
 
 ### Workflow 2: Frontend Development
@@ -318,39 +318,39 @@ minikube start --driver=docker --cpus=4 --memory=8192
 
 **Kind**:
 ```bash
-kind delete cluster --name auraweb-local
-kind create cluster --name auraweb-local
+kind delete cluster --name ecommerce-local
+kind create cluster --name ecommerce-local
 ```
 
 **k3d**:
 ```bash
-k3d cluster delete auraweb-local
-k3d cluster create auraweb-local --agents 2
+k3d cluster delete ecommerce-local
+k3d cluster create ecommerce-local --agents 2
 ```
 
 ### Image Pull Errors
 
 ```bash
 # Verify image is loaded
-minikube image ls | grep auraweb
-kind load docker-image auraweb/backend:local --name auraweb-local
-k3d image import auraweb/backend:local -c auraweb-local
+minikube image ls | grep ecommerce
+kind load docker-image ecommerce/backend:local --name ecommerce-local
+k3d image import ecommerce/backend:local -c ecommerce-local
 ```
 
 ### Pods Not Starting
 
 ```bash
 # Check pod status
-kubectl get pods -n auraweb-local
+kubectl get pods -n ecommerce-local
 
 # Describe pod
-kubectl describe pod <pod-name> -n auraweb-local
+kubectl describe pod <pod-name> -n ecommerce-local
 
 # View logs
-kubectl logs <pod-name> -n auraweb-local
+kubectl logs <pod-name> -n ecommerce-local
 
 # Check events
-kubectl get events -n auraweb-local --sort-by='.lastTimestamp'
+kubectl get events -n ecommerce-local --sort-by='.lastTimestamp'
 ```
 
 ### Ingress Not Working
@@ -394,15 +394,15 @@ docker compose build
 
 # Load into cluster
 for service in backend frontend admin gateway; do
-  minikube image load auraweb/${service}:local
+  minikube image load ecommerce/${service}:local
 done
 ```
 
 ### 3. Namespace Isolation
 
-Always use the `auraweb-local` namespace:
+Always use the `ecommerce-local` namespace:
 ```bash
-kubectl config set-context --current --namespace=auraweb-local
+kubectl config set-context --current --namespace=ecommerce-local
 ```
 
 ### 4. Clean Up Regularly

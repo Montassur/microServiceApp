@@ -252,7 +252,7 @@ Password: guest
 amqp://guest:guest@localhost:5672
 ```
 
-### From inside another container on the `auraweb` compose network
+### From inside another container on the `ecommerce` compose network
 ```
 amqp://guest:guest@rabbitmq:5672
 ```

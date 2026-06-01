@@ -148,11 +148,11 @@ jobs:
           docker_layer_caching: true
       - docker/check
       - docker/build:
-          image: $DOCKER_REGISTRY/auraweb/backend
+          image: $DOCKER_REGISTRY/ecommerce/backend
           tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
           path: ./backend
       - docker/push:
-          image: $DOCKER_REGISTRY/auraweb/backend
+          image: $DOCKER_REGISTRY/ecommerce/backend
           tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
 
   build-frontend:
@@ -163,11 +163,11 @@ jobs:
           docker_layer_caching: true
       - docker/check
       - docker/build:
-          image: $DOCKER_REGISTRY/auraweb/frontend
+          image: $DOCKER_REGISTRY/ecommerce/frontend
           tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
           path: ./frontend
       - docker/push:
-          image: $DOCKER_REGISTRY/auraweb/frontend
+          image: $DOCKER_REGISTRY/ecommerce/frontend
           tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
 
   build-admin:
@@ -178,11 +178,11 @@ jobs:
           docker_layer_caching: true
       - docker/check
       - docker/build:
-          image: $DOCKER_REGISTRY/auraweb/admin
+          image: $DOCKER_REGISTRY/ecommerce/admin
           tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
           path: ./admin
       - docker/push:
-          image: $DOCKER_REGISTRY/auraweb/admin
+          image: $DOCKER_REGISTRY/ecommerce/admin
           tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
 
   build-nginx:
@@ -193,11 +193,11 @@ jobs:
           docker_layer_caching: true
       - docker/check
       - docker/build:
-          image: $DOCKER_REGISTRY/auraweb/nginx
+          image: $DOCKER_REGISTRY/ecommerce/nginx
           tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
           path: ./nginx
       - docker/push:
-          image: $DOCKER_REGISTRY/auraweb/nginx
+          image: $DOCKER_REGISTRY/ecommerce/nginx
           tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
 
   # ==========================================
@@ -216,13 +216,13 @@ jobs:
           name: Deploy to Staging
           command: |
             kubectl apply -k k8s/overlays/development
-            kubectl set image deployment/dev-backend backend=$DOCKER_REGISTRY/auraweb/backend:$CIRCLE_SHA1 -n auraweb-dev
-            kubectl set image deployment/dev-frontend frontend=$DOCKER_REGISTRY/auraweb/frontend:$CIRCLE_SHA1 -n auraweb-dev
-            kubectl set image deployment/dev-admin admin=$DOCKER_REGISTRY/auraweb/admin:$CIRCLE_SHA1 -n auraweb-dev
-            kubectl set image deployment/dev-gateway gateway=$DOCKER_REGISTRY/auraweb/nginx:$CIRCLE_SHA1 -n auraweb-dev
-            kubectl rollout status deployment/dev-backend -n auraweb-dev --timeout=5m
-            kubectl rollout status deployment/dev-frontend -n auraweb-dev --timeout=5m
-            kubectl rollout status deployment/dev-admin -n auraweb-dev --timeout=5m
+            kubectl set image deployment/dev-backend backend=$DOCKER_REGISTRY/ecommerce/backend:$CIRCLE_SHA1 -n ecommerce-dev
+            kubectl set image deployment/dev-frontend frontend=$DOCKER_REGISTRY/ecommerce/frontend:$CIRCLE_SHA1 -n ecommerce-dev
+            kubectl set image deployment/dev-admin admin=$DOCKER_REGISTRY/ecommerce/admin:$CIRCLE_SHA1 -n ecommerce-dev
+            kubectl set image deployment/dev-gateway gateway=$DOCKER_REGISTRY/ecommerce/nginx:$CIRCLE_SHA1 -n ecommerce-dev
+            kubectl rollout status deployment/dev-backend -n ecommerce-dev --timeout=5m
+            kubectl rollout status deployment/dev-frontend -n ecommerce-dev --timeout=5m
+            kubectl rollout status deployment/dev-admin -n ecommerce-dev --timeout=5m
 
   # ==========================================
   # Deploy to Production
@@ -240,13 +240,13 @@ jobs:
           name: Deploy to Production
           command: |
             kubectl apply -k k8s/overlays/production
-            kubectl set image deployment/prod-backend backend=$DOCKER_REGISTRY/auraweb/backend:$CIRCLE_SHA1 -n auraweb-prod
-            kubectl set image deployment/prod-frontend frontend=$DOCKER_REGISTRY/auraweb/frontend:$CIRCLE_SHA1 -n auraweb-prod
-            kubectl set image deployment/prod-admin admin=$DOCKER_REGISTRY/auraweb/admin:$CIRCLE_SHA1 -n auraweb-prod
-            kubectl set image deployment/prod-gateway gateway=$DOCKER_REGISTRY/auraweb/nginx:$CIRCLE_SHA1 -n auraweb-prod
-            kubectl rollout status deployment/prod-backend -n auraweb-prod --timeout=10m
-            kubectl rollout status deployment/prod-frontend -n auraweb-prod --timeout=10m
-            kubectl rollout status deployment/prod-admin -n auraweb-prod --timeout=10m
+            kubectl set image deployment/prod-backend backend=$DOCKER_REGISTRY/ecommerce/backend:$CIRCLE_SHA1 -n ecommerce-prod
+            kubectl set image deployment/prod-frontend frontend=$DOCKER_REGISTRY/ecommerce/frontend:$CIRCLE_SHA1 -n ecommerce-prod
+            kubectl set image deployment/prod-admin admin=$DOCKER_REGISTRY/ecommerce/admin:$CIRCLE_SHA1 -n ecommerce-prod
+            kubectl set image deployment/prod-gateway gateway=$DOCKER_REGISTRY/ecommerce/nginx:$CIRCLE_SHA1 -n ecommerce-prod
+            kubectl rollout status deployment/prod-backend -n ecommerce-prod --timeout=10m
+            kubectl rollout status deployment/prod-frontend -n ecommerce-prod --timeout=10m
+            kubectl rollout status deployment/prod-admin -n ecommerce-prod --timeout=10m
 
 # ==========================================
 # Workflows

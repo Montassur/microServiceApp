@@ -204,19 +204,19 @@ deploy:staging:
   image: bitnami/kubectl:latest
   environment:
     name: staging
-    url: https://staging.auraweb.com
+    url: https://staging.ecommerce.com
   before_script:
     - mkdir -p $HOME/.kube
     - echo "$KUBE_CONFIG_STAGING" | base64 -d > $HOME/.kube/config
   script:
     - kubectl apply -k k8s/overlays/development
-    - kubectl set image deployment/dev-backend backend=$REGISTRY/$IMAGE_PREFIX/backend:$CI_COMMIT_SHA -n auraweb-dev
-    - kubectl set image deployment/dev-frontend frontend=$REGISTRY/$IMAGE_PREFIX/frontend:$CI_COMMIT_SHA -n auraweb-dev
-    - kubectl set image deployment/dev-admin admin=$REGISTRY/$IMAGE_PREFIX/admin:$CI_COMMIT_SHA -n auraweb-dev
-    - kubectl set image deployment/dev-gateway gateway=$REGISTRY/$IMAGE_PREFIX/nginx:$CI_COMMIT_SHA -n auraweb-dev
-    - kubectl rollout status deployment/dev-backend -n auraweb-dev --timeout=5m
-    - kubectl rollout status deployment/dev-frontend -n auraweb-dev --timeout=5m
-    - kubectl rollout status deployment/dev-admin -n auraweb-dev --timeout=5m
+    - kubectl set image deployment/dev-backend backend=$REGISTRY/$IMAGE_PREFIX/backend:$CI_COMMIT_SHA -n ecommerce-dev
+    - kubectl set image deployment/dev-frontend frontend=$REGISTRY/$IMAGE_PREFIX/frontend:$CI_COMMIT_SHA -n ecommerce-dev
+    - kubectl set image deployment/dev-admin admin=$REGISTRY/$IMAGE_PREFIX/admin:$CI_COMMIT_SHA -n ecommerce-dev
+    - kubectl set image deployment/dev-gateway gateway=$REGISTRY/$IMAGE_PREFIX/nginx:$CI_COMMIT_SHA -n ecommerce-dev
+    - kubectl rollout status deployment/dev-backend -n ecommerce-dev --timeout=5m
+    - kubectl rollout status deployment/dev-frontend -n ecommerce-dev --timeout=5m
+    - kubectl rollout status deployment/dev-admin -n ecommerce-dev --timeout=5m
   only:
     - develop
 
@@ -228,19 +228,19 @@ deploy:production:
   image: bitnami/kubectl:latest
   environment:
     name: production
-    url: https://auraweb.com
+    url: https://ecommerce.com
   before_script:
     - mkdir -p $HOME/.kube
     - echo "$KUBE_CONFIG_PRODUCTION" | base64 -d > $HOME/.kube/config
   script:
     - kubectl apply -k k8s/overlays/production
-    - kubectl set image deployment/prod-backend backend=$REGISTRY/$IMAGE_PREFIX/backend:$CI_COMMIT_SHA -n auraweb-prod
-    - kubectl set image deployment/prod-frontend frontend=$REGISTRY/$IMAGE_PREFIX/frontend:$CI_COMMIT_SHA -n auraweb-prod
-    - kubectl set image deployment/prod-admin admin=$REGISTRY/$IMAGE_PREFIX/admin:$CI_COMMIT_SHA -n auraweb-prod
-    - kubectl set image deployment/prod-gateway gateway=$REGISTRY/$IMAGE_PREFIX/nginx:$CI_COMMIT_SHA -n auraweb-prod
-    - kubectl rollout status deployment/prod-backend -n auraweb-prod --timeout=10m
-    - kubectl rollout status deployment/prod-frontend -n auraweb-prod --timeout=10m
-    - kubectl rollout status deployment/prod-admin -n auraweb-prod --timeout=10m
+    - kubectl set image deployment/prod-backend backend=$REGISTRY/$IMAGE_PREFIX/backend:$CI_COMMIT_SHA -n ecommerce-prod
+    - kubectl set image deployment/prod-frontend frontend=$REGISTRY/$IMAGE_PREFIX/frontend:$CI_COMMIT_SHA -n ecommerce-prod
+    - kubectl set image deployment/prod-admin admin=$REGISTRY/$IMAGE_PREFIX/admin:$CI_COMMIT_SHA -n ecommerce-prod
+    - kubectl set image deployment/prod-gateway gateway=$REGISTRY/$IMAGE_PREFIX/nginx:$CI_COMMIT_SHA -n ecommerce-prod
+    - kubectl rollout status deployment/prod-backend -n ecommerce-prod --timeout=10m
+    - kubectl rollout status deployment/prod-frontend -n ecommerce-prod --timeout=10m
+    - kubectl rollout status deployment/prod-admin -n ecommerce-prod --timeout=10m
   when: manual
   only:
     - main

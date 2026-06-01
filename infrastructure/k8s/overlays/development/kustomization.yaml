@@ -5,7 +5,7 @@ resources:
   - ../../base
   - gateway.yaml
 
-namespace: auraweb-dev
+namespace: ecommerce-dev
 
 # NOTE: no namePrefix — application code hardcodes DNS names like
 # `redis`, `database`, `gateway`, etc. so Services must keep those names.

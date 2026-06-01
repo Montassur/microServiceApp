@@ -344,7 +344,7 @@ jobs:
         if: github.event.inputs.environment == 'local-k8s' && github.event.inputs.cluster_type == 'kind'
         uses: helm/kind-action@v1
         with:
-          cluster_name: auraweb-local
+          cluster_name: ecommerce-local
 
       - name: Deploy to Local Kubernetes
         if: github.event.inputs.environment == 'local-k8s'
@@ -358,8 +358,8 @@ jobs:
       - name: Display service status
         run: |
           if [ "${{ github.event.inputs.cluster_type }}" != "docker-compose" ] && [ "${{ github.event.inputs.cluster_type }}" != "" ]; then
-            kubectl get pods -n auraweb-local
-            kubectl get svc -n auraweb-local
+            kubectl get pods -n ecommerce-local
+            kubectl get svc -n ecommerce-local
           else
             docker compose ps
           fi
@@ -368,7 +368,7 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.cluster_type }}" != "docker-compose" ] && [ "${{ github.event.inputs.cluster_type }}" != "" ]; then
             # K8s tests
-            kubectl wait --for=condition=ready pod -l app=backend -n auraweb-local --timeout=300s || true
+            kubectl wait --for=condition=ready pod -l app=backend -n ecommerce-local --timeout=300s || true
           else
             # Docker Compose tests
             docker compose exec -T backend npm run test:ci || true
@@ -378,7 +378,7 @@ jobs:
         if: failure()
         run: |
           if [ "${{ github.event.inputs.cluster_type }}" != "docker-compose" ] && [ "${{ github.event.inputs.cluster_type }}" != "" ]; then
-            kubectl logs -l app=auraweb -n auraweb-local --tail=100
+            kubectl logs -l app=ecommerce -n ecommerce-local --tail=100
           else
             docker compose logs --tail=100
           fi
@@ -387,7 +387,7 @@ jobs:
         if: always()
         run: |
           if [ "${{ github.event.inputs.cluster_type }}" != "docker-compose" ] && [ "${{ github.event.inputs.cluster_type }}" != "" ]; then
-            kubectl delete namespace auraweb-local --ignore-not-found=true
+            kubectl delete namespace ecommerce-local --ignore-not-found=true
           else
             docker compose down -v
           fi
@@ -402,7 +402,7 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     environment:
       name: staging
-      url: https://staging.auraweb.com
+      url: https://staging.ecommerce.com
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -420,16 +420,16 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -k k8s/overlays/development
-          kubectl set image deployment/dev-backend backend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.sha }} -n auraweb-dev
-          kubectl set image deployment/dev-frontend frontend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }} -n auraweb-dev
-          kubectl set image deployment/dev-admin admin=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/admin:${{ github.sha }} -n auraweb-dev
-          kubectl set image deployment/dev-gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/nginx:${{ github.sha }} -n auraweb-dev
+          kubectl set image deployment/dev-backend backend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.sha }} -n ecommerce-dev
+          kubectl set image deployment/dev-frontend frontend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }} -n ecommerce-dev
+          kubectl set image deployment/dev-admin admin=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/admin:${{ github.sha }} -n ecommerce-dev
+          kubectl set image deployment/dev-gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/nginx:${{ github.sha }} -n ecommerce-dev
 
       - name: Wait for rollout
         run: |
-          kubectl rollout status deployment/dev-backend -n auraweb-dev --timeout=5m
-          kubectl rollout status deployment/dev-frontend -n auraweb-dev --timeout=5m
-          kubectl rollout status deployment/dev-admin -n auraweb-dev --timeout=5m
+          kubectl rollout status deployment/dev-backend -n ecommerce-dev --timeout=5m
+          kubectl rollout status deployment/dev-frontend -n ecommerce-dev --timeout=5m
+          kubectl rollout status deployment/dev-admin -n ecommerce-dev --timeout=5m
 
       - name: Run health checks
         run: |
@@ -445,7 +445,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: https://auraweb.com
+      url: https://ecommerce.com
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -463,16 +463,16 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -k k8s/overlays/production
-          kubectl set image deployment/prod-backend backend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.sha }} -n auraweb-prod
-          kubectl set image deployment/prod-frontend frontend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }} -n auraweb-prod
-          kubectl set image deployment/prod-admin admin=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/admin:${{ github.sha }} -n auraweb-prod
-          kubectl set image deployment/prod-gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/nginx:${{ github.sha }} -n auraweb-prod
+          kubectl set image deployment/prod-backend backend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.sha }} -n ecommerce-prod
+          kubectl set image deployment/prod-frontend frontend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }} -n ecommerce-prod
+          kubectl set image deployment/prod-admin admin=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/admin:${{ github.sha }} -n ecommerce-prod
+          kubectl set image deployment/prod-gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/nginx:${{ github.sha }} -n ecommerce-prod
 
       - name: Wait for rollout
         run: |
-          kubectl rollout status deployment/prod-backend -n auraweb-prod --timeout=10m
-          kubectl rollout status deployment/prod-frontend -n auraweb-prod --timeout=10m
-          kubectl rollout status deployment/prod-admin -n auraweb-prod --timeout=10m
+          kubectl rollout status deployment/prod-backend -n ecommerce-prod --timeout=10m
+          kubectl rollout status deployment/prod-frontend -n ecommerce-prod --timeout=10m
+          kubectl rollout status deployment/prod-admin -n ecommerce-prod --timeout=10m
 
       - name: Run health checks
         run: |
@@ -483,4 +483,4 @@ jobs:
         run: |
           echo "✅ Production deployment successful!"
           echo "Version: ${{ github.sha }}"
-          echo "URL: https://auraweb.com"
+          echo "URL: https://ecommerce.com"

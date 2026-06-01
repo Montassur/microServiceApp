@@ -130,8 +130,8 @@ Complete documentation available in the `docs/` directory:
 *   **[📂 Project Structure](docs/10-Project-Structure.md)** - Deep dive into code organization.
 
 ## 🔐 Default Credentials (Dev)
-*   **Admin User**: `admin@auraweb.com` / `Admin@123`
-*   **Database**: `auraweb_user` / `password`
+*   **Admin User**: `admin@ecommerce.com` / `Admin@123`
+*   **Database**: `ecommerce_user` / `password`
 
 > [!CAUTION]
 > **Production Notice**: Always rotate these credentials and use Secret Managers (Values or Vault) for production deployments.

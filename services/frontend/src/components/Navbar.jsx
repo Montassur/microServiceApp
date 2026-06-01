@@ -20,7 +20,7 @@ function Navbar() {
     return (
         <nav className="navbar">
             <Link to="/" className="logo">
-                Aura<span style={{ color: 'var(--primary)' }}>Web</span>
+                Ecommerce
             </Link>
             <div className="nav-links">
                 <Link

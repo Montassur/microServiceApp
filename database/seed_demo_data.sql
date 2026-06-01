@@ -203,7 +203,7 @@ END $$;
 \echo '   • 50+ Product reviews'
 \echo ''
 \echo '🔐 Test Credentials (password: Admin@123):'
-\echo '   Admin: admin@auraweb.com'
+\echo '   Admin: admin@ecommerce.com'
 \echo '   User: john.doe@techcorp.com'
 \echo '   Editor: editor@example.com'
 \echo ''

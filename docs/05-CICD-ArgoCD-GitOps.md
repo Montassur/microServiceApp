@@ -51,23 +51,23 @@ kubectl apply -f argocd/applications.yaml
 
 **Staging**:
 ```yaml
-name: auraweb-staging
+name: ecommerce-staging
 source:
   repoURL: https://github.com/your-org/your-repo.git
   targetRevision: develop
   path: k8s/overlays/development
 destination:
-  namespace: auraweb-dev
+  namespace: ecommerce-dev
 ```
 
 **Production**:
 ```yaml
-name: auraweb-production
+name: ecommerce-production
 source:
   targetRevision: main
   path: k8s/overlays/production
 destination:
-  namespace: auraweb-prod
+  namespace: ecommerce-prod
 ```
 
 ---
@@ -135,16 +135,16 @@ argocd login localhost:8080 \
 argocd app list
 
 # Get application details
-argocd app get auraweb-production
+argocd app get ecommerce-production
 
 # Sync application
-argocd app sync auraweb-production
+argocd app sync ecommerce-production
 
 # View sync status
-argocd app wait auraweb-production
+argocd app wait ecommerce-production
 
 # Rollback
-argocd app rollback auraweb-production
+argocd app rollback ecommerce-production
 ```
 
 ---
@@ -191,7 +191,7 @@ syncPolicy:
 
 **Sync manually**:
 ```bash
-argocd app sync auraweb-production
+argocd app sync ecommerce-production
 ```
 
 ---
@@ -252,17 +252,17 @@ data:
 
 ```bash
 # List revisions
-argocd app history auraweb-production
+argocd app history ecommerce-production
 ```
 
 ### Rollback to Previous Version
 
 ```bash
 # Rollback to specific revision
-argocd app rollback auraweb-production <revision-id>
+argocd app rollback ecommerce-production <revision-id>
 
 # Rollback to previous
-argocd app rollback auraweb-production
+argocd app rollback ecommerce-production
 ```
 
 ---
@@ -280,10 +280,10 @@ argocd app rollback auraweb-production
 **CLI**:
 ```bash
 # Watch application
-argocd app watch auraweb-production
+argocd app watch ecommerce-production
 
 # Get sync status
-argocd app get auraweb-production --refresh
+argocd app get ecommerce-production --refresh
 ```
 
 ---
@@ -298,7 +298,7 @@ argocd app get auraweb-production --refresh
 kubectl logs -n argocd deployment/argocd-application-controller
 
 # Sync operation logs
-argocd app logs auraweb-production
+argocd app logs ecommerce-production
 ```
 
 ### Out of Sync
@@ -311,10 +311,10 @@ argocd app logs auraweb-production
 **Fix**:
 ```bash
 # Hard refresh
-argocd app sync auraweb-production --force
+argocd app sync ecommerce-production --force
 
 # Prune extra resources
-argocd app sync auraweb-production --prune
+argocd app sync ecommerce-production --prune
 ```
 
 ---
@@ -379,7 +379,7 @@ metadata:
 ```yaml
 - name: Trigger ArgoCD Sync
   run: |
-    argocd app sync auraweb-production --prune
+    argocd app sync ecommerce-production --prune
 ```
 
 ### GitLab CI
@@ -387,7 +387,7 @@ metadata:
 ```yaml
 deploy:production:
   script:
-    - argocd app sync auraweb-production
+    - argocd app sync ecommerce-production
 ```
 
 ---

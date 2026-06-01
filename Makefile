@@ -49,49 +49,49 @@ SERVICES := frontend admin gateway user-auth catalog order-payment fulfillment s
 
 build-images: ## Build all Docker images
 	@for svc in $(SERVICES); do \
-		echo "Building auraweb/$$svc:latest"; \
-		docker build -t auraweb/$$svc:latest ./services/$$svc || exit 1; \
+		echo "Building ecommerce/$$svc:latest"; \
+		docker build -t ecommerce/$$svc:latest ./services/$$svc || exit 1; \
 	done
 
 push-images: ## Push images to registry
 	@for svc in $(SERVICES); do \
-		echo "Pushing auraweb/$$svc:latest"; \
-		docker push auraweb/$$svc:latest || exit 1; \
+		echo "Pushing ecommerce/$$svc:latest"; \
+		docker push ecommerce/$$svc:latest || exit 1; \
 	done
 
 # Kubernetes Management
 k8s-status-dev: ## Show development cluster status
-	kubectl get all -n auraweb-dev
+	kubectl get all -n ecommerce-dev
 
 k8s-status-prod: ## Show production cluster status
-	kubectl get all -n auraweb-prod
+	kubectl get all -n ecommerce-prod
 
 k8s-logs-dev: ## View development logs
-	kubectl logs -f -l app=$(service) -n auraweb-dev
+	kubectl logs -f -l app=$(service) -n ecommerce-dev
 
 k8s-logs-prod: ## View production logs
-	kubectl logs -f -l app=$(service) -n auraweb-prod
+	kubectl logs -f -l app=$(service) -n ecommerce-prod
 
 k8s-shell-dev: ## Get shell in development pod
-	kubectl exec -it $(pod) -n auraweb-dev -- /bin/sh
+	kubectl exec -it $(pod) -n ecommerce-dev -- /bin/sh
 
 k8s-shell-prod: ## Get shell in production pod
-	kubectl exec -it $(pod) -n auraweb-prod -- /bin/sh
+	kubectl exec -it $(pod) -n ecommerce-prod -- /bin/sh
 
 # Database
 db-backup: ## Backup database
-	kubectl exec -n auraweb-prod $(shell kubectl get pods -n auraweb-prod -l app=database -o jsonpath='{.items[0].metadata.name}') -- pg_dump -U postgres auraweb > backup-$(shell date +%Y%m%d-%H%M%S).sql
+	kubectl exec -n ecommerce-prod $(shell kubectl get pods -n ecommerce-prod -l app=database -o jsonpath='{.items[0].metadata.name}') -- pg_dump -U postgres ecommerce > backup-$(shell date +%Y%m%d-%H%M%S).sql
 
 db-restore: ## Restore database (file=backup.sql)
-	kubectl exec -i -n auraweb-prod $(shell kubectl get pods -n auraweb-prod -l app=database -o jsonpath='{.items[0].metadata.name}') -- psql -U postgres auraweb < $(file)
+	kubectl exec -i -n ecommerce-prod $(shell kubectl get pods -n ecommerce-prod -l app=database -o jsonpath='{.items[0].metadata.name}') -- psql -U postgres ecommerce < $(file)
 
 # Cleanup
 clean: ## Clean up local Docker resources
 	./scripts/cleanup local dev --yes
 
 clean-k8s-dev: ## Delete development namespace
-	kubectl delete namespace auraweb-dev
+	kubectl delete namespace ecommerce-dev
 
 clean-k8s-prod: ## Delete production namespace (DANGEROUS!)
 	@echo "⚠️  WARNING: This will delete the production namespace!"
-	@read -p "Are you sure? (yes/no): " confirm && [ "$$confirm" = "yes" ] && kubectl delete namespace auraweb-prod || echo "Cancelled"
+	@read -p "Are you sure? (yes/no): " confirm && [ "$$confirm" = "yes" ] && kubectl delete namespace ecommerce-prod || echo "Cancelled"

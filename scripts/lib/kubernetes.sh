@@ -19,20 +19,20 @@ deploy_local_services() {
     log_info "Deploying services to Kubernetes..."
     
     # Create namespace
-    kubectl create namespace auraweb-local --dry-run=client -o yaml | kubectl apply -f -
+    kubectl create namespace ecommerce-local --dry-run=client -o yaml | kubectl apply -f -
     
     # Apply base configurations
     kubectl apply -k k8s/base
     
     if [ "$services" = "all" ]; then
         log_info "Deploying all services..."
-        kubectl apply -k k8s/overlays/development -n auraweb-local
+        kubectl apply -k k8s/overlays/development -n ecommerce-local
         
         # Update images with local tags
         for service in "${ALL_SERVICES[@]}"; do
              if [ "$service" != "database" ]; then
                 # Helm/Kustomize might prefix names, e.g. dev-catalog-service
-                kubectl set image deployment/dev-${service} ${service}=auraweb/${service}:local -n auraweb-local || true
+                kubectl set image deployment/dev-${service} ${service}=ecommerce/${service}:local -n ecommerce-local || true
              fi
         done
     else
@@ -45,10 +45,10 @@ deploy_local_services() {
         for service in "${SERVICE_ARRAY[@]}"; do
             # Simply apply the specific deployment file from base if it exists
             if [ -f "infrastructure/k8s/base/${service}-deployment.yaml" ]; then
-                kubectl apply -f infrastructure/k8s/base/${service}-deployment.yaml -n auraweb-local
-                kubectl set image deployment/${service} ${service}=auraweb/${service}:local -n auraweb-local || true
+                kubectl apply -f infrastructure/k8s/base/${service}-deployment.yaml -n ecommerce-local
+                kubectl set image deployment/${service} ${service}=ecommerce/${service}:local -n ecommerce-local || true
             elif [ "$service" = "database" ]; then
-                 kubectl apply -f infrastructure/k8s/base/postgres-statefulset.yaml -n auraweb-local
+                 kubectl apply -f infrastructure/k8s/base/postgres-statefulset.yaml -n ecommerce-local
             fi
         done
     fi
@@ -60,7 +60,7 @@ wait_for_local_deployments() {
     log_info "Waiting for deployments to be ready..."
     
     if [ "$services" = "all" ]; then
-        kubectl wait --for=condition=available --timeout=300s deployment --all -n auraweb-local
+        kubectl wait --for=condition=available --timeout=300s deployment --all -n ecommerce-local
     else
         local OLD_IFS=$IFS
         IFS=',' read -ra SERVICE_ARRAY <<< "$services"
@@ -68,7 +68,7 @@ wait_for_local_deployments() {
         
         for service in "${SERVICE_ARRAY[@]}"; do
             if [ "$service" != "database" ]; then
-                kubectl wait --for=condition=available --timeout=300s deployment/dev-${service} -n auraweb-local || true
+                kubectl wait --for=condition=available --timeout=300s deployment/dev-${service} -n ecommerce-local || true
             fi
         done
     fi
@@ -79,11 +79,11 @@ show_local_status() {
     echo ""
     log_header "Local Deployment Status"
     echo ""
-    kubectl get pods -n auraweb-local
+    kubectl get pods -n ecommerce-local
     echo ""
-    kubectl get svc -n auraweb-local
+    kubectl get svc -n ecommerce-local
     echo ""
-    kubectl get ingress -n auraweb-local
+    kubectl get ingress -n ecommerce-local
 }
 
 # Get access URL
@@ -92,11 +92,11 @@ get_local_access_url() {
     case $cluster_type in
         minikube)
             log_success "Access URL: http://$(minikube ip)"
-            log_info "Or run: minikube service gateway -n auraweb-local"
+            log_info "Or run: minikube service gateway -n ecommerce-local"
             ;;
         kind|k3d|docker-desktop)
              log_success "Access URL: http://localhost"
-             log_info "Port forward: kubectl port-forward -n auraweb-local svc/gateway 8080:80"
+             log_info "Port forward: kubectl port-forward -n ecommerce-local svc/gateway 8080:80"
             ;;
     esac
 }
@@ -126,15 +126,15 @@ deploy_with_kubectl() {
     
     case $environment in
         dev)
-            namespace="auraweb-dev"
+            namespace="ecommerce-dev"
             overlay="development"
             ;;
         staging)
-            namespace="auraweb-staging"
+            namespace="ecommerce-staging"
             overlay="development"
             ;;
         production)
-            namespace="auraweb-prod"
+            namespace="ecommerce-prod"
             overlay="production"
             ;;
     esac
@@ -168,7 +168,7 @@ deploy_with_argocd() {
     
     log_info "Deploying with ArgoCD..."
     
-    local app_name="auraweb-${environment}"
+    local app_name="ecommerce-${environment}"
     
     # Check if ArgoCD CLI is available
     if ! command_exists argocd; then

@@ -98,7 +98,7 @@ pipeline {
 ```groovy
 environment {
     REGISTRY = 'your-registry.com'
-    IMAGE_PREFIX = 'auraweb'
+    IMAGE_PREFIX = 'ecommerce'
 }
 ```
 

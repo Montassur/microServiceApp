@@ -71,7 +71,7 @@ make deploy-dev
 kubectl apply -k k8s/overlays/development
 
 # Check status
-kubectl get pods -n auraweb-dev
+kubectl get pods -n ecommerce-dev
 ```
 
 ---
@@ -82,23 +82,23 @@ kubectl get pods -n auraweb-dev
 
 ```bash
 # Build all images
-docker build -t auraweb/frontend:dev ./frontend
-docker build -t auraweb/admin:dev ./admin
-docker build -t auraweb/backend:dev ./backend
+docker build -t ecommerce/frontend:dev ./frontend
+docker build -t ecommerce/admin:dev ./admin
+docker build -t ecommerce/backend:dev ./backend
 ```
 
 ### Step 2: Push to Registry (Optional)
 
 ```bash
 # Tag for your registry
-docker tag auraweb/frontend:dev your-registry/auraweb/frontend:dev
-docker tag auraweb/admin:dev your-registry/auraweb/admin:dev
-docker tag auraweb/backend:dev your-registry/auraweb/backend:dev
+docker tag ecommerce/frontend:dev your-registry/ecommerce/frontend:dev
+docker tag ecommerce/admin:dev your-registry/ecommerce/admin:dev
+docker tag ecommerce/backend:dev your-registry/ecommerce/backend:dev
 
 # Push
-docker push your-registry/auraweb/frontend:dev
-docker push your-registry/auraweb/admin:dev
-docker push your-registry/auraweb/backend:dev
+docker push your-registry/ecommerce/frontend:dev
+docker push your-registry/ecommerce/admin:dev
+docker push your-registry/ecommerce/backend:dev
 ```
 
 ### Step 3: Deploy to Kubernetes
@@ -118,20 +118,20 @@ make deploy-dev
 
 ```bash
 # Check pods
-kubectl get pods -n auraweb-dev
+kubectl get pods -n ecommerce-dev
 
 # Check services
-kubectl get svc -n auraweb-dev
+kubectl get svc -n ecommerce-dev
 
 # Check logs
-kubectl logs -f deployment/dev-backend -n auraweb-dev
+kubectl logs -f deployment/dev-backend -n ecommerce-dev
 ```
 
 ### Step 5: Access the Application
 
 ```bash
 # Port forward to local machine
-kubectl port-forward svc/dev-gateway 8080:80 -n auraweb-dev
+kubectl port-forward svc/dev-gateway 8080:80 -n ecommerce-dev
 
 # Access at http://localhost:8080
 ```
@@ -179,11 +179,11 @@ Edit `k8s/overlays/production/kustomization.yaml`:
 ```yaml
 # Update image tags
 images:
-- name: auraweb/frontend
+- name: ecommerce/frontend
   newTag: v1.0.0
-- name: auraweb/admin
+- name: ecommerce/admin
   newTag: v1.0.0
-- name: auraweb/backend
+- name: ecommerce/backend
   newTag: v1.0.0
 ```
 
@@ -197,25 +197,25 @@ images:
 kubectl apply -k k8s/overlays/production
 
 # Update images
-kubectl set image deployment/prod-frontend frontend=auraweb/frontend:v1.0.0 -n auraweb-prod
-kubectl set image deployment/prod-admin admin=auraweb/admin:v1.0.0 -n auraweb-prod
-kubectl set image deployment/prod-backend backend=auraweb/backend:v1.0.0 -n auraweb-prod
+kubectl set image deployment/prod-frontend frontend=ecommerce/frontend:v1.0.0 -n ecommerce-prod
+kubectl set image deployment/prod-admin admin=ecommerce/admin:v1.0.0 -n ecommerce-prod
+kubectl set image deployment/prod-backend backend=ecommerce/backend:v1.0.0 -n ecommerce-prod
 ```
 
 ### Step 4: Verify Production
 
 ```bash
 # Check all resources
-kubectl get all -n auraweb-prod
+kubectl get all -n ecommerce-prod
 
 # Run health checks
 ./scripts/health-check.sh prod
 
 # Check ingress
-kubectl get ingress -n auraweb-prod
+kubectl get ingress -n ecommerce-prod
 
 # Check SSL certificate
-kubectl get certificate -n auraweb-prod
+kubectl get certificate -n ecommerce-prod
 ```
 
 ---
@@ -261,7 +261,7 @@ configMapGenerator:
 #### Manual Scaling
 ```bash
 # Scale backend to 5 replicas
-kubectl scale deployment/prod-backend --replicas=5 -n auraweb-prod
+kubectl scale deployment/prod-backend --replicas=5 -n ecommerce-prod
 ```
 
 #### Auto-Scaling (Production)
@@ -277,20 +277,20 @@ HPA configured in `k8s/overlays/production/hpa.yaml`:
 
 ```bash
 # All pods in namespace
-kubectl logs -f -l app=backend -n auraweb-prod
+kubectl logs -f -l app=backend -n ecommerce-prod
 
 # Specific pod
-kubectl logs -f pod-name -n auraweb-prod
+kubectl logs -f pod-name -n ecommerce-prod
 
 # Previous pod logs
-kubectl logs -f pod-name --previous -n auraweb-prod
+kubectl logs -f pod-name --previous -n ecommerce-prod
 ```
 
 ### Metrics
 
 ```bash
 # Pod metrics
-kubectl top pods -n auraweb-prod
+kubectl top pods -n ecommerce-prod
 
 # Node metrics
 kubectl top nodes
@@ -300,7 +300,7 @@ kubectl top nodes
 
 ```bash
 # Recent events
-kubectl get events -n auraweb-prod --sort-by='.lastTimestamp'
+kubectl get events -n ecommerce-prod --sort-by='.lastTimestamp'
 ```
 
 ---
@@ -311,10 +311,10 @@ kubectl get events -n auraweb-prod --sort-by='.lastTimestamp'
 
 ```bash
 # Describe pod
-kubectl describe pod pod-name -n auraweb-prod
+kubectl describe pod pod-name -n ecommerce-prod
 
 # Check logs
-kubectl logs pod-name -n auraweb-prod
+kubectl logs pod-name -n ecommerce-prod
 
 # Common issues:
 # - Image pull errors
@@ -326,10 +326,10 @@ kubectl logs pod-name -n auraweb-prod
 
 ```bash
 # Check service
-kubectl get svc -n auraweb-prod
+kubectl get svc -n ecommerce-prod
 
 # Check endpoints
-kubectl get endpoints -n auraweb-prod
+kubectl get endpoints -n ecommerce-prod
 
 # Test from another pod
 kubectl run -it --rm debug --image=alpine --restart=Never -- sh
@@ -341,26 +341,26 @@ wget -O- http://backend:3000/health
 
 ```bash
 # Check database pod
-kubectl get pods -l app=database -n auraweb-prod
+kubectl get pods -l app=database -n ecommerce-prod
 
 # Check database logs
-kubectl logs -f statefulset/database -n auraweb-prod
+kubectl logs -f statefulset/database -n ecommerce-prod
 
 # Connect to database
-kubectl exec -it database-0 -n auraweb-prod -- psql -U postgres -d auraweb
+kubectl exec -it database-0 -n ecommerce-prod -- psql -U postgres -d ecommerce
 ```
 
 ### Rollback Failed Deployment
 
 ```bash
 # Rollback to previous version
-kubectl rollout undo deployment/prod-backend -n auraweb-prod
+kubectl rollout undo deployment/prod-backend -n ecommerce-prod
 
 # Rollback to specific revision
-kubectl rollout undo deployment/prod-backend --to-revision=2 -n auraweb-prod
+kubectl rollout undo deployment/prod-backend --to-revision=2 -n ecommerce-prod
 
 # Check rollout history
-kubectl rollout history deployment/prod-backend -n auraweb-prod
+kubectl rollout history deployment/prod-backend -n ecommerce-prod
 ```
 
 ---
@@ -374,7 +374,7 @@ kubectl rollout history deployment/prod-backend -n auraweb-prod
 make db-backup
 
 # Or manually
-kubectl exec database-0 -n auraweb-prod -- pg_dump -U postgres auraweb > backup.sql
+kubectl exec database-0 -n ecommerce-prod -- pg_dump -U postgres ecommerce > backup.sql
 ```
 
 ### Database Restore
@@ -384,7 +384,7 @@ kubectl exec database-0 -n auraweb-prod -- pg_dump -U postgres auraweb > backup.
 make db-restore file=backup.sql
 
 # Or manually
-kubectl exec -i database-0 -n auraweb-prod -- psql -U postgres auraweb < backup.sql
+kubectl exec -i database-0 -n ecommerce-prod -- psql -U postgres ecommerce < backup.sql
 ```
 
 ### Update Secrets
@@ -396,7 +396,7 @@ kubectl create secret generic backend-secrets \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # Restart pods to pick up new secrets
-kubectl rollout restart deployment/prod-backend -n auraweb-prod
+kubectl rollout restart deployment/prod-backend -n ecommerce-prod
 ```
 
 ### Certificate Renewal
@@ -405,7 +405,7 @@ Certificates are automatically renewed by cert-manager. To force renewal:
 
 ```bash
 # Delete certificate
-kubectl delete certificate auraweb-prod-tls -n auraweb-prod
+kubectl delete certificate ecommerce-prod-tls -n ecommerce-prod
 
 # Reapply ingress
 kubectl apply -f k8s/base/ingress/ingress.yaml
@@ -419,31 +419,31 @@ kubectl apply -f k8s/base/ingress/ingress.yaml
 
 ```bash
 # Get all resources
-kubectl get all -n auraweb-prod
+kubectl get all -n ecommerce-prod
 
 # Describe resource
-kubectl describe deployment/prod-backend -n auraweb-prod
+kubectl describe deployment/prod-backend -n ecommerce-prod
 
 # Edit resource
-kubectl edit deployment/prod-backend -n auraweb-prod
+kubectl edit deployment/prod-backend -n ecommerce-prod
 
 # Delete resource
-kubectl delete pod pod-name -n auraweb-prod
+kubectl delete pod pod-name -n ecommerce-prod
 
 # Execute command in pod
-kubectl exec -it pod-name -n auraweb-prod -- /bin/sh
+kubectl exec -it pod-name -n ecommerce-prod -- /bin/sh
 
 # Port forward
-kubectl port-forward svc/backend 3000:3000 -n auraweb-prod
+kubectl port-forward svc/backend 3000:3000 -n ecommerce-prod
 
 # Copy files
-kubectl cp pod-name:/path/to/file ./local-file -n auraweb-prod
+kubectl cp pod-name:/path/to/file ./local-file -n ecommerce-prod
 
 # Apply changes
 kubectl apply -f file.yaml
 
 # Delete namespace (CAREFUL!)
-kubectl delete namespace auraweb-dev
+kubectl delete namespace ecommerce-dev
 ```
 
 ---

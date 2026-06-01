@@ -101,10 +101,10 @@ docker compose down
 
 ```bash
 # Minikube
-minikube service gateway -n auraweb-local
+minikube service gateway -n ecommerce-local
 
 # Kind/k3d/Docker Desktop
-kubectl port-forward -n auraweb-local svc/gateway 8080:80
+kubectl port-forward -n ecommerce-local svc/gateway 8080:80
 # Then: http://localhost:8080
 ```
 
@@ -136,17 +136,17 @@ kubectl port-forward -n auraweb-local svc/gateway 8080:80
 ### Environments
 
 **Development**:
-- Namespace: `auraweb-dev`
+- Namespace: `ecommerce-dev`
 - Replicas: 2
 - Resources: Medium
 
 **Staging**:
-- Namespace: `auraweb-staging`
+- Namespace: `ecommerce-staging`
 - Replicas: 2-3
 - Resources: Production-like
 
 **Production**:
-- Namespace: `auraweb-prod`
+- Namespace: `ecommerce-prod`
 - Replicas: 3-10 (auto-scaling)
 - Resources: High
 - Network policies: Enabled
@@ -180,10 +180,10 @@ kubectl port-forward -n auraweb-local svc/gateway 8080:80
 argocd app list
 
 # Sync application
-argocd app sync auraweb-production
+argocd app sync ecommerce-production
 
 # Rollback
-argocd app rollback auraweb-production
+argocd app rollback ecommerce-production
 ```
 
 **Full Guide**: [`05-CICD-ArgoCD-GitOps.md`](05-CICD-ArgoCD-GitOps.md)

@@ -5,7 +5,7 @@ resources:
   - ../../base
   - gateway.yaml
 
-namespace: auraweb-prod
+namespace: ecommerce-prod
 
 labels:
   - pairs:

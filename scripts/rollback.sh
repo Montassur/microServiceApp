@@ -5,9 +5,9 @@ ENV=${1:-dev}
 DEPLOYMENT=${2}
 
 if [ "$ENV" = "prod" ]; then
-    NAMESPACE="auraweb-prod"
+    NAMESPACE="ecommerce-prod"
 else
-    NAMESPACE="auraweb-dev"
+    NAMESPACE="ecommerce-dev"
 fi
 
 if [ -z "$DEPLOYMENT" ]; then

@@ -4,11 +4,11 @@
 ENV=${1:-dev}
 
 if [ "$ENV" = "prod" ]; then
-    NAMESPACE="auraweb-prod"
-    URL="https://auraweb.com"
+    NAMESPACE="ecommerce-prod"
+    URL="https://ecommerce.com"
 else
-    NAMESPACE="auraweb-dev"
-    URL="https://dev.auraweb.com"
+    NAMESPACE="ecommerce-dev"
+    URL="https://dev.ecommerce.com"
 fi
 
 echo "🏥 Running health checks for $ENV environment..."

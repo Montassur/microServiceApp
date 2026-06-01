@@ -1,6 +1,6 @@
 # Database Service
 
-PostgreSQL 16 database for AuraWeb application.
+PostgreSQL 16 database for Ecommerce application.
 
 ## Overview
 
@@ -39,7 +39,7 @@ Manages refresh tokens for JWT authentication.
 ## Default Credentials
 
 **Admin Account:**
-- Email: `admin@auraweb.com`
+- Email: `admin@ecommerce.com`
 - Password: `Admin@123`
 - Role: admin
 
@@ -67,19 +67,19 @@ Data is persisted in a Docker volume named `postgres_data`.
 ### Backup
 ```bash
 # Create backup
-docker exec docker-nginx-react-frontend-admin-database-1 pg_dump -U auraweb_user auraweb_db > backup_$(date +%Y%m%d).sql
+docker exec docker-nginx-react-frontend-admin-database-1 pg_dump -U ecommerce_user ecommerce_db > backup_$(date +%Y%m%d).sql
 
 # Compressed backup
-docker exec docker-nginx-react-frontend-admin-database-1 pg_dump -U auraweb_user auraweb_db | gzip > backup_$(date +%Y%m%d).sql.gz
+docker exec docker-nginx-react-frontend-admin-database-1 pg_dump -U ecommerce_user ecommerce_db | gzip > backup_$(date +%Y%m%d).sql.gz
 ```
 
 ### Restore
 ```bash
 # Restore from backup
-docker exec -i docker-nginx-react-frontend-admin-database-1 psql -U auraweb_user auraweb_db < backup.sql
+docker exec -i docker-nginx-react-frontend-admin-database-1 psql -U ecommerce_user ecommerce_db < backup.sql
 
 # Restore from compressed backup
-gunzip < backup.sql.gz | docker exec -i docker-nginx-react-frontend-admin-database-1 psql -U auraweb_user auraweb_db
+gunzip < backup.sql.gz | docker exec -i docker-nginx-react-frontend-admin-database-1 psql -U ecommerce_user ecommerce_db
 ```
 
 ## Accessing the Database
@@ -87,15 +87,15 @@ gunzip < backup.sql.gz | docker exec -i docker-nginx-react-frontend-admin-databa
 ### Via Docker
 ```bash
 # Connect to PostgreSQL
-docker exec -it docker-nginx-react-frontend-admin-database-1 psql -U auraweb_user -d auraweb_db
+docker exec -it docker-nginx-react-frontend-admin-database-1 psql -U ecommerce_user -d ecommerce_db
 
 # Run SQL file
-docker exec -i docker-nginx-react-frontend-admin-database-1 psql -U auraweb_user -d auraweb_db < query.sql
+docker exec -i docker-nginx-react-frontend-admin-database-1 psql -U ecommerce_user -d ecommerce_db < query.sql
 ```
 
 ### Via psql (if installed locally)
 ```bash
-psql -h localhost -p 5432 -U auraweb_user -d auraweb_db
+psql -h localhost -p 5432 -U ecommerce_user -d ecommerce_db
 ```
 
 ## Common Queries
@@ -132,12 +132,12 @@ DELETE FROM sessions WHERE expires_at < NOW();
 
 ### Vacuum Database
 ```bash
-docker exec docker-nginx-react-frontend-admin-database-1 vacuumdb -U auraweb_user -d auraweb_db -z
+docker exec docker-nginx-react-frontend-admin-database-1 vacuumdb -U ecommerce_user -d ecommerce_db -z
 ```
 
 ### Check Database Size
 ```sql
-SELECT pg_size_pretty(pg_database_size('auraweb_db'));
+SELECT pg_size_pretty(pg_database_size('ecommerce_db'));
 ```
 
 ### Check Table Sizes
@@ -155,7 +155,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Health Check
 The database service includes a health check that runs every 10 seconds:
 ```bash
-pg_isready -U auraweb_user
+pg_isready -U ecommerce_user
 ```
 
 ### Connection Stats
@@ -166,7 +166,7 @@ SELECT
     xact_commit as commits,
     xact_rollback as rollbacks
 FROM pg_stat_database
-WHERE datname = 'auraweb_db';
+WHERE datname = 'ecommerce_db';
 ```
 
 ## Security
@@ -210,8 +210,8 @@ docker compose up -d database
 ## Environment Variables
 
 Required in `.env`:
-- `DB_NAME` - Database name (default: auraweb_db)
-- `DB_USER` - Database user (default: auraweb_user)
+- `DB_NAME` - Database name (default: ecommerce_db)
+- `DB_USER` - Database user (default: ecommerce_user)
 - `DB_PASSWORD` - Database password (CHANGE IN PRODUCTION!)
 
 ## Performance Tuning

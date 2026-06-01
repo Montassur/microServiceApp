@@ -6,8 +6,8 @@ function Settings() {
     const toast = useToast();
     const [activeTab, setActiveTab] = useState('general');
     const [settings, setSettings] = useState({
-        siteName: 'AuraWeb Admin',
-        siteUrl: 'https://admin.auraweb.com',
+        siteName: 'Ecommerce Admin',
+        siteUrl: 'https://admin.ecommerce.com',
         description: 'Modern admin panel for managing users and content',
         timezone: 'UTC',
         language: 'en',

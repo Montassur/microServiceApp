@@ -69,9 +69,9 @@ Single deployment interface supporting:
 
 | Value | Description | Namespace |
 |-------|-------------|-----------|
-| `dev` | Development | `auraweb-dev` |
-| `staging` | Pre-production | `auraweb-staging` |
-| `production` | Live production | `auraweb-prod` |
+| `dev` | Development | `ecommerce-dev` |
+| `staging` | Pre-production | `ecommerce-staging` |
+| `production` | Live production | `ecommerce-prod` |
 
 ### 3. Services
 
@@ -142,10 +142,10 @@ Single deployment interface supporting:
 **Access**:
 ```bash
 # Minikube
-minikube service gateway -n auraweb-local
+minikube service gateway -n ecommerce-local
 
 # Kind/k3d/Docker Desktop
-kubectl port-forward -n auraweb-local svc/gateway 8080:80
+kubectl port-forward -n ecommerce-local svc/gateway 8080:80
 # Then: http://localhost:8080
 ```
 
@@ -166,7 +166,7 @@ kubectl port-forward -n auraweb-local svc/gateway 8080:80
 
 **Access**:
 ```bash
-kubectl get ingress -n auraweb-staging
+kubectl get ingress -n ecommerce-staging
 ```
 
 ---
@@ -186,7 +186,7 @@ kubectl get ingress -n auraweb-staging
 
 **Access**:
 ```bash
-kubectl get ingress -n auraweb-prod
+kubectl get ingress -n ecommerce-prod
 ```
 
 ---
@@ -370,10 +370,10 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 docker compose ps
 
 # Local (K8s)
-kubectl get pods -n auraweb-local
+kubectl get pods -n ecommerce-local
 
 # Cloud
-kubectl get pods -n auraweb-[dev|staging|production]
+kubectl get pods -n ecommerce-[dev|staging|production]
 ```
 
 ### View Logs

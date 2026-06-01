@@ -17,13 +17,13 @@ data:
         metrics_path: '/metrics'
         static_configs:
           - targets:
-              - 'user-auth.auraweb-dev.svc.cluster.local:3000'
-              - 'catalog.auraweb-dev.svc.cluster.local:3001'
-              - 'order-payment.auraweb-dev.svc.cluster.local:3002'
-              - 'fulfillment.auraweb-dev.svc.cluster.local:3003'
-              - 'shopping.auraweb-dev.svc.cluster.local:3004'
-              - 'platform.auraweb-dev.svc.cluster.local:3005'
-              - 'inventory.auraweb-dev.svc.cluster.local:3006'
+              - 'user-auth.ecommerce-dev.svc.cluster.local:3000'
+              - 'catalog.ecommerce-dev.svc.cluster.local:3001'
+              - 'order-payment.ecommerce-dev.svc.cluster.local:3002'
+              - 'fulfillment.ecommerce-dev.svc.cluster.local:3003'
+              - 'shopping.ecommerce-dev.svc.cluster.local:3004'
+              - 'platform.ecommerce-dev.svc.cluster.local:3005'
+              - 'inventory.ecommerce-dev.svc.cluster.local:3006'
             labels:
               group: 'backend-services'
 
@@ -31,7 +31,7 @@ data:
         metrics_path: '/metrics'
         static_configs:
           - targets:
-              - 'rabbitmq.auraweb-dev.svc.cluster.local:15692'
+              - 'rabbitmq.ecommerce-dev.svc.cluster.local:15692'
             labels:
               group: 'infrastructure'
 

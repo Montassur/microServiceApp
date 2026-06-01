@@ -1,5 +1,5 @@
 -- ==========================================
--- AuraWeb Database Initialization
+-- Ecommerce Database Initialization
 -- Comprehensive schema for ALL backend services
 -- PostgreSQL 17.2
 -- ==========================================
@@ -296,7 +296,7 @@ CREATE TRIGGER update_inventory_updated_at BEFORE UPDATE ON inventory
 -- Note: This is a bcrypt hash with 12 rounds
 INSERT INTO users (email, password_hash, first_name, last_name, role, email_verified)
 VALUES (
-    'admin@auraweb.com',
+    'admin@ecommerce.com',
     '$2a$10$r/dfkeiyJykHYAwsXTrYEOviPWvrAnAdbMRCv75WuEDy0WJ3mU4SO',
     'Admin',
     'User',
@@ -315,8 +315,8 @@ ON CONFLICT (email) DO NOTHING;
 -- GRANT PERMISSIONS
 -- ==========================================
 -- Uncomment if using specific database user
--- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO auraweb_user;
--- GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO auraweb_user;
+-- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ecommerce_user;
+-- GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ecommerce_user;
 
 -- ==========================================
 -- COMPLETION MESSAGE
@@ -336,7 +336,7 @@ ON CONFLICT (email) DO NOTHING;
 \echo '   • audit_logs, analytics_events'
 \echo ''
 \echo '🔐 Default Users:'
-\echo '   Admin: admin@auraweb.com / Admin@123'
+\echo '   Admin: admin@ecommerce.com / Admin@123'
 \echo '   User: user@example.com / Admin@123'
 \echo '   Editor: editor@example.com / Admin@123'
 \echo ''

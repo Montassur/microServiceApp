@@ -8,15 +8,15 @@ Complete record of every issue found, every fix applied, and every system brough
 
 | System | URL | Login |
 |---|---|---|
-| Storefront (Docker) | http://localhost:9080 | `admin@auraweb.com` / `Admin@123` |
-| Admin panel (Docker) | http://localhost:8081 | `admin@auraweb.com` / `Admin@123` |
+| Storefront (Docker) | http://localhost:9080 | `admin@ecommerce.com` / `Admin@123` |
+| Admin panel (Docker) | http://localhost:8081 | `admin@ecommerce.com` / `Admin@123` |
 | Gateway / API (Docker) | http://localhost:3080 | — |
 | RabbitMQ Management | http://localhost:15672 | `guest` / `guest` |
-| Postgres (DBeaver) | `localhost:5432` / `auraweb_db` | `auraweb_user` / `password` |
+| Postgres (DBeaver) | `localhost:5432` / `ecommerce_db` | `ecommerce_user` / `password` |
 | Prometheus | http://localhost:9090 | — |
 | Grafana | http://localhost:3100 | `admin` / `admin` |
-| Storefront (K8s) | `kubectl port-forward -n auraweb-dev svc/frontend 9081:80` | same app creds |
-| Admin (K8s) | `kubectl port-forward -n auraweb-dev svc/admin 8082:80` | same app creds |
+| Storefront (K8s) | `kubectl port-forward -n ecommerce-dev svc/frontend 9081:80` | same app creds |
+| Admin (K8s) | `kubectl port-forward -n ecommerce-dev svc/admin 8082:80` | same app creds |
 | ArgoCD UI | `kubectl port-forward -n argocd svc/argocd-server 8083:443` | `admin` / *(see §10)* |
 
 ---
@@ -152,7 +152,7 @@ location /api/ {
 }
 ```
 
-Login now works in the browser: `admin@auraweb.com` / `Admin@123` returns a JWT.
+Login now works in the browser: `admin@ecommerce.com` / `Admin@123` returns a JWT.
 
 ---
 
@@ -164,7 +164,7 @@ User reported "can't connect with same user."
 ```
 HTTP 200 — {"name":"guest","tags":["administrator"]}
 ```
-User confusion: tried to use **app user** (`admin@auraweb.com`) as the RabbitMQ user. They're two completely separate user databases — app users live in Postgres, RabbitMQ has its own.
+User confusion: tried to use **app user** (`admin@ecommerce.com`) as the RabbitMQ user. They're two completely separate user databases — app users live in Postgres, RabbitMQ has its own.
 
 Clarified in docs. No code change needed.
 
@@ -220,13 +220,13 @@ Verified live against the running container:
 ```
 Host:     localhost
 Port:     5432
-Database: auraweb_db
-Username: auraweb_user
+Database: ecommerce_db
+Username: ecommerce_user
 Password: password
-JDBC URL: jdbc:postgresql://localhost:5432/auraweb_db
+JDBC URL: jdbc:postgresql://localhost:5432/ecommerce_db
 ```
 
-Note: `.env.development` line 33 says `DB_USER=root` but that's a stale value — the real Postgres user is `auraweb_user` (set in `docker-compose.yml`).
+Note: `.env.development` line 33 says `DB_USER=root` but that's a stale value — the real Postgres user is `ecommerce_user` (set in `docker-compose.yml`).
 
 16 tables present: `users`, `sessions`, `notifications`, `products`, `reviews`, `product_recommendations`, `orders`, `order_items`, `payments`, `shipments`, `coupons`, `cart_items`, `wishlists`, `audit_logs`, `analytics_events`, `inventory`.
 
@@ -265,9 +265,9 @@ Status checks first:
 
 | # | Bug | Fix |
 |---|---|---|
-| 1 | Overlay's `namePrefix: dev-` renamed all Services to `dev-redis`, `dev-database`, `dev-gateway` — but app code & nginx hardcode names like `redis`, `database`, `gateway` → every DNS lookup broke | Removed `namePrefix` from dev overlay. Namespace `auraweb-dev` already isolates env. |
+| 1 | Overlay's `namePrefix: dev-` renamed all Services to `dev-redis`, `dev-database`, `dev-gateway` — but app code & nginx hardcode names like `redis`, `database`, `gateway` → every DNS lookup broke | Removed `namePrefix` from dev overlay. Namespace `ecommerce-dev` already isolates env. |
 | 2 | `secrets.env` missing `DB_NAME`, `DB_USER`, `RABBITMQ_USER`, `RABBITMQ_PASS` → postgres and rabbitmq pods stuck in `CreateContainerConfigError` | Added the 4 missing keys |
-| 3 | No `Namespace` resource in overlay → apply errored before kustomize could create anything | `kubectl create namespace auraweb-dev` explicitly |
+| 3 | No `Namespace` resource in overlay → apply errored before kustomize could create anything | `kubectl create namespace ecommerce-dev` explicitly |
 | 4 | RabbitMQ Service had two ports without `name:` fields (required when >1 port) | Added `name: amqp` and `name: management` |
 | 5 | No `gateway` Deployment in base → frontend/admin nginx crashed trying to resolve `gateway:80` | Created `base/gateway-deployment.yaml` + added to base kustomization |
 | 6 | `redis:7-alpine` doesn't include RediSearch → catalog crashed with `unknown command 'FT.CREATE'` | Swapped to `redis/redis-stack-server:latest` |
@@ -275,13 +275,13 @@ Status checks first:
 ### Also installed Gateway API CRDs
 The overlay references `Gateway` + `HTTPRoute` (gateway.networking.k8s.io/v1) — CRDs not installed by default on Docker Desktop. Installed v1.2.0 standard CRDs.
 
-**Result:** 13/13 project pods Running in `auraweb-dev` namespace.
+**Result:** 13/13 project pods Running in `ecommerce-dev` namespace.
 
 ### To access from browser
 ```bash
-kubectl port-forward -n auraweb-dev svc/frontend 9081:80    # storefront
-kubectl port-forward -n auraweb-dev svc/admin 8082:80       # admin
-kubectl port-forward -n auraweb-dev svc/gateway 8084:80     # gateway / API
+kubectl port-forward -n ecommerce-dev svc/frontend 9081:80    # storefront
+kubectl port-forward -n ecommerce-dev svc/admin 8082:80       # admin
+kubectl port-forward -n ecommerce-dev svc/gateway 8084:80     # gateway / API
 ```
 
 ---
@@ -369,7 +369,7 @@ Apply `argocd/applications.yaml` to make ArgoCD manage the dev overlay automatic
 - **OpenAPI/Swagger** — no API contracts.
 - **DB migrations tool** — currently only `init.sql` on first boot. Need node-pg-migrate / Knex / Prisma for ongoing schema changes.
 - **ArgoCD application binding** — installed but not yet pointed at `argocd/applications.yaml`.
-- **Rotate seeded admin password** — `admin@auraweb.com` / `Admin@123` is in source.
+- **Rotate seeded admin password** — `admin@ecommerce.com` / `Admin@123` is in source.
 - **Rotate all production secret placeholders** — `.env.production` still has `CHANGE_ME_IN_PROD`.
 - **Architectural fixes from `RABBITMQ_EVENTS.md`** — duplicate fulfillment path, stub notifications, orphan events.
 
@@ -387,13 +387,13 @@ docker compose ps                                        # status table
 
 # Kubernetes
 kubectl apply -k infrastructure/k8s/overlays/development # deploy dev
-kubectl get pods -n auraweb-dev                          # see project pods
+kubectl get pods -n ecommerce-dev                          # see project pods
 kubectl get pods -n argocd                               # see argocd pods
-kubectl delete namespace auraweb-dev                     # tear down project
-kubectl logs -n auraweb-dev deployment/catalog --tail=20
+kubectl delete namespace ecommerce-dev                     # tear down project
+kubectl logs -n ecommerce-dev deployment/catalog --tail=20
 
 # Database
-docker compose exec database psql -U auraweb_user -d auraweb_db -c "\dt"
+docker compose exec database psql -U ecommerce_user -d ecommerce_db -c "\dt"
 ./scripts/seed-demo-data.sh
 ./scripts/manage-user.sh                                 # interactive user CRUD
 

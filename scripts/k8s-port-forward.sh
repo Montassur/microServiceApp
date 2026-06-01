@@ -4,15 +4,15 @@
 
 set -euo pipefail
 
-PIDFILE="/tmp/auraweb-pf.pids"
+PIDFILE="/tmp/ecommerce-pf.pids"
 
 # format: namespace:service:host-port:container-port
 declare -a FORWARDS=(
-  "auraweb-dev:frontend:9080:80"
-  "auraweb-dev:admin:8081:80"
-  "auraweb-dev:gateway:3080:80"
-  "auraweb-dev:postgres:5432:5432"
-  "auraweb-dev:rabbitmq:15672:15672"
+  "ecommerce-dev:frontend:9080:80"
+  "ecommerce-dev:admin:8081:80"
+  "ecommerce-dev:gateway:3080:80"
+  "ecommerce-dev:postgres:5432:5432"
+  "ecommerce-dev:rabbitmq:15672:15672"
   "monitoring:prometheus:9090:9090"
   "monitoring:grafana:3100:3000"
   "argocd:argocd-server:8083:443"
@@ -33,7 +33,7 @@ cmd_start() {
   echo "  Storefront         http://localhost:9080"
   echo "  Admin              http://localhost:8081"
   echo "  Gateway API        http://localhost:3080"
-  echo "  Postgres           localhost:5432    (auraweb_user / password)"
+  echo "  Postgres           localhost:5432    (ecommerce_user / password)"
   echo "  RabbitMQ UI        http://localhost:15672  (guest / guest)"
   echo "  Prometheus         http://localhost:9090"
   echo "  Grafana            http://localhost:3100   (admin / admin)"

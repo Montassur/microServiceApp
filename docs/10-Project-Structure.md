@@ -442,7 +442,7 @@ Stage 2: Production (node:18-alpine)
 
 **Database**:
 ```yaml
-pg_isready -U auraweb_user -d auraweb_db
+pg_isready -U ecommerce_user -d ecommerce_db
 ```
 
 **Backend**:

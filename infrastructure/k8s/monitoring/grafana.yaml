@@ -25,7 +25,7 @@ data:
   dashboards.yml: |
     apiVersion: 1
     providers:
-      - name: 'auraweb'
+      - name: 'ecommerce'
         orgId: 1
         folder: ''
         type: file

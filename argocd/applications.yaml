@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: auraweb-dev
+  name: ecommerce-dev
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -15,7 +15,7 @@ spec:
   
   destination:
     server: https://kubernetes.default.svc
-    namespace: auraweb-dev
+    namespace: ecommerce-dev
   
   syncPolicy:
     automated:
@@ -44,7 +44,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: auraweb-production
+  name: ecommerce-production
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -58,7 +58,7 @@ spec:
   
   destination:
     server: https://kubernetes.default.svc
-    namespace: auraweb-prod
+    namespace: ecommerce-prod
   
   syncPolicy:
     automated:

@@ -22,15 +22,15 @@ cat > .env << EOF
 # ==========================================
 
 # Database Configuration
-POSTGRES_USER=auraweb_user
+POSTGRES_USER=ecommerce_user
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-POSTGRES_DB=auraweb_db
+POSTGRES_DB=ecommerce_db
 
 # Redis Configuration
 REDIS_PASSWORD=${REDIS_PASSWORD}
 
 # RabbitMQ Configuration
-RABBITMQ_USER=auraweb_admin
+RABBITMQ_USER=ecommerce_admin
 RABBITMQ_PASS=${RABBITMQ_PASS}
 
 # JWT Secret

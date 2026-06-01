@@ -162,7 +162,7 @@ spec:
 
 **Trigger**:
 ```bash
-argocd app sync auraweb-production
+argocd app sync ecommerce-production
 ```
 
 **Pros**:

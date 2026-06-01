@@ -1,4 +1,4 @@
-# AuraWeb — Project Guide
+# Ecommerce — Project Guide
 
 A complete walkthrough of what's in this project, how the pieces fit together, and what you must change before going to production.
 
@@ -6,7 +6,7 @@ A complete walkthrough of what's in this project, how the pieces fit together, a
 
 ## 1. What this project is
 
-**AuraWeb** is a microservices e-commerce platform packaged as a DevOps demo. It runs in three modes:
+**Ecommerce** is a microservices e-commerce platform packaged as a DevOps demo. It runs in three modes:
 
 | Mode | Tool | Use for |
 |---|---|---|
@@ -27,8 +27,8 @@ The stack is **2 React frontends + 7 Node/Express microservices + 1 Nginx gatewa
 │   ├── k8s/
 │   │   ├── base/          ← Kustomize base (deployments, services, statefulset)
 │   │   ├── overlays/
-│   │   │   ├── development/  ← namespace auraweb-dev, dev- prefix, LOG_LEVEL=debug
-│   │   │   └── production/   ← namespace auraweb-prod, replicas=2, LOG_LEVEL=info
+│   │   │   ├── development/  ← namespace ecommerce-dev, dev- prefix, LOG_LEVEL=debug
+│   │   │   └── production/   ← namespace ecommerce-prod, replicas=2, LOG_LEVEL=info
 │   │   └── gateway-api/   ← Gateway API CRDs (HTTPRoute, Gateway)
 │   ├── docker/            ← Shared node-service.Dockerfile template
 │   └── prometheus/        ← prometheus.yml scrape config
@@ -94,7 +94,7 @@ These are seeded by `database/init.sql` and `.env.development` when you first st
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@auraweb.com` | `Admin@123` |
+| Admin | `admin@ecommerce.com` | `Admin@123` |
 | User | `user@example.com` | `Admin@123` |
 | Editor | `editor@example.com` | `Admin@123` |
 
@@ -104,7 +104,7 @@ These are seeded by `database/init.sql` and `.env.development` when you first st
 
 | Service | User | Password |
 |---|---|---|
-| PostgreSQL | `auraweb_user` | `password` |
+| PostgreSQL | `ecommerce_user` | `password` |
 | RabbitMQ (mgmt UI at http://localhost:15672) | `guest` | `guest` |
 | MinIO | `minio` | `minio123` |
 
@@ -151,7 +151,7 @@ These are the items that will get you breached / pwned / fined if left at defaul
    - `STRIPE_SECRET_KEY` (real Stripe live key, not test)
    - `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY`
    Generate with: `./scripts/generate-secrets.sh`
-2. **Change the default admin password.** `admin@auraweb.com / Admin@123` is public knowledge once this repo is cloned. Either reset via `./scripts/manage-user.sh` or remove the seed in `database/init.sql` and create the first admin manually.
+2. **Change the default admin password.** `admin@ecommerce.com / Admin@123` is public knowledge once this repo is cloned. Either reset via `./scripts/manage-user.sh` or remove the seed in `database/init.sql` and create the first admin manually.
 3. **Change RabbitMQ `guest`/`guest`.** RabbitMQ refuses `guest` from non-localhost by default, but if you expose port 5672 externally this becomes a hole.
 4. **Replace MinIO `minio`/`minio123`** if you keep MinIO instead of moving to real S3 in prod.
 5. **Move secrets out of env files into a real manager.** Options: AWS Secrets Manager, GCP Secret Manager, HashiCorp Vault, Sealed Secrets, or External Secrets Operator for K8s.
@@ -159,13 +159,13 @@ These are the items that will get you breached / pwned / fined if left at defaul
 ### 🟠 Important — configuration
 
 6. **Replace dev domains in `.env.production`:**
-   - `DOMAIN=auraweb.com` → your real domain
+   - `DOMAIN=ecommerce.com` → your real domain
    - `FRONTEND_URL`, `ADMIN_URL`, `API_URL` → match your DNS
 7. **TLS certificates.** Gateway currently terminates plain HTTP. For prod:
    - Use cert-manager + Let's Encrypt on K8s, or
    - Put a managed LB (ALB/Cloudflare) in front of the gateway
 8. **Update `infrastructure/k8s/overlays/production/secrets.env`** with real values (currently all `REPLACE_ME`).
-9. **Image registry.** `Makefile` pushes to `auraweb/*:latest`. Change to your real registry: `ghcr.io/<your-org>/*` or ECR/GCR/ACR.
+9. **Image registry.** `Makefile` pushes to `ecommerce/*:latest`. Change to your real registry: `ghcr.io/<your-org>/*` or ECR/GCR/ACR.
 10. **`STRIPE_SECRET_KEY`.** Test key in dev, **live key** (`sk_live_…`) only in prod, only via secret manager.
 
 ### 🟡 Recommended — operations
@@ -245,7 +245,7 @@ docker compose up -d --build           # rebuild everything (slow)
 ```bash
 make k8s-dev                     # apply infrastructure/k8s/overlays/development
 make k8s-prod                    # apply infrastructure/k8s/overlays/production
-make k8s-status-dev              # see pods/services in auraweb-dev
+make k8s-status-dev              # see pods/services in ecommerce-dev
 make health-dev                  # smoke-test cluster endpoints
 ```
 
@@ -293,5 +293,5 @@ make health-dev                  # smoke-test cluster endpoints
 cp .env.development .env
 docker compose up -d
 open http://localhost:9080       # storefront
-open http://localhost:8081       # admin (login: admin@auraweb.com / Admin@123)
+open http://localhost:8081       # admin (login: admin@ecommerce.com / Admin@123)
 ```

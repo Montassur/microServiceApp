@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
+    name VARCHAR(255),
     role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin', 'editor')),
     is_active BOOLEAN DEFAULT true,
     email_verified BOOLEAN DEFAULT false,
@@ -22,6 +23,9 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP
 );
+
+-- Forward-compat: existing DBs from older init.sql also get the column
+ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255);
 
 -- Sessions table for refresh tokens
 CREATE TABLE IF NOT EXISTS sessions (

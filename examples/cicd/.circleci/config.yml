@@ -1,0 +1,343 @@
+version: 2.1
+
+# Pipeline parameters for manual triggers
+parameters:
+  deployment_type:
+    type: enum
+    enum: ["local", "cloud"]
+    default: "local"
+    description: "Deployment Type"
+  environment:
+    type: enum
+    enum: ["dev", "staging", "production"]
+    default: "dev"
+    description: "Target Environment"
+  services:
+    type: string
+    default: "all"
+    description: "Services to deploy (all, backend, frontend, admin, gateway, database)"
+  cluster_type:
+    type: enum
+    enum: ["docker-compose", "minikube", "kind", "k3d", "docker-desktop"]
+    default: "docker-compose"
+    description: "Cluster Type (for local deployments)"
+  use_gitops:
+    type: boolean
+    default: false
+    description: "Use GitOps (ArgoCD) for cloud deployments"
+
+orbs:
+  node: circleci/node@5.1
+  docker: circleci/docker@2.2
+  kubernetes: circleci/kubernetes@1.3
+
+executors:
+  node-executor:
+    docker:
+      - image: cimg/node:18.19
+  docker-executor:
+    docker:
+      - image: cimg/base:stable
+
+jobs:
+  # ==========================================
+  # Lint Jobs
+  # ==========================================
+  lint-backend:
+    executor: node-executor
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: backend
+      - run:
+          name: Lint Backend
+          command: cd backend && npm run lint
+
+  lint-frontend:
+    executor: node-executor
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: frontend
+      - run:
+          name: Lint Frontend
+          command: cd frontend && npm run lint
+
+  lint-admin:
+    executor: node-executor
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: admin
+      - run:
+          name: Lint Admin
+          command: cd admin && npm run lint
+
+  # ==========================================
+  # Test Job
+  # ==========================================
+  test-backend:
+    executor: node-executor
+    docker:
+      - image: cimg/node:18.19
+      - image: cimg/postgres:16.1
+        environment:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+    environment:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: test_db
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+      JWT_SECRET: test-jwt-secret-key-for-ci-testing-only-min-32-chars
+      JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci-testing-only-min-32-chars
+      NODE_ENV: test
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+          app-dir: backend
+      - run:
+          name: Wait for PostgreSQL
+          command: dockerize -wait tcp://localhost:5432 -timeout 1m
+      - run:
+          name: Run Tests
+          command: cd backend && npm run test:ci
+      - store_test_results:
+          path: backend/coverage
+      - store_artifacts:
+          path: backend/coverage
+      - run:
+          name: Upload Coverage to Codecov
+          command: |
+            curl -Os https://uploader.codecov.io/latest/linux/codecov
+            chmod +x codecov
+            ./codecov -f backend/coverage/lcov.info
+
+  # ==========================================
+  # Security Scan
+  # ==========================================
+  security-scan:
+    executor: docker-executor
+    steps:
+      - checkout
+      - run:
+          name: Install Trivy
+          command: |
+            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+            echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+            sudo apt-get update
+            sudo apt-get install trivy
+      - run:
+          name: Run Trivy Scan
+          command: trivy fs --exit-code 0 --severity HIGH,CRITICAL .
+
+  # ==========================================
+  # Build Docker Images
+  # ==========================================
+  build-backend:
+    executor: docker-executor
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - docker/check
+      - docker/build:
+          image: $DOCKER_REGISTRY/auraweb/backend
+          tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
+          path: ./backend
+      - docker/push:
+          image: $DOCKER_REGISTRY/auraweb/backend
+          tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
+
+  build-frontend:
+    executor: docker-executor
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - docker/check
+      - docker/build:
+          image: $DOCKER_REGISTRY/auraweb/frontend
+          tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
+          path: ./frontend
+      - docker/push:
+          image: $DOCKER_REGISTRY/auraweb/frontend
+          tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
+
+  build-admin:
+    executor: docker-executor
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - docker/check
+      - docker/build:
+          image: $DOCKER_REGISTRY/auraweb/admin
+          tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
+          path: ./admin
+      - docker/push:
+          image: $DOCKER_REGISTRY/auraweb/admin
+          tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
+
+  build-nginx:
+    executor: docker-executor
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - docker/check
+      - docker/build:
+          image: $DOCKER_REGISTRY/auraweb/nginx
+          tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
+          path: ./nginx
+      - docker/push:
+          image: $DOCKER_REGISTRY/auraweb/nginx
+          tag: $CIRCLE_SHA1,$CIRCLE_BRANCH
+
+  # ==========================================
+  # Deploy to Staging
+  # ==========================================
+  deploy-staging:
+    executor: kubernetes/default
+    steps:
+      - checkout
+      - kubernetes/install-kubectl
+      - run:
+          name: Configure kubectl
+          command: |
+            echo $KUBE_CONFIG_STAGING | base64 -d > $HOME/.kube/config
+      - run:
+          name: Deploy to Staging
+          command: |
+            kubectl apply -k k8s/overlays/development
+            kubectl set image deployment/dev-backend backend=$DOCKER_REGISTRY/auraweb/backend:$CIRCLE_SHA1 -n auraweb-dev
+            kubectl set image deployment/dev-frontend frontend=$DOCKER_REGISTRY/auraweb/frontend:$CIRCLE_SHA1 -n auraweb-dev
+            kubectl set image deployment/dev-admin admin=$DOCKER_REGISTRY/auraweb/admin:$CIRCLE_SHA1 -n auraweb-dev
+            kubectl set image deployment/dev-gateway gateway=$DOCKER_REGISTRY/auraweb/nginx:$CIRCLE_SHA1 -n auraweb-dev
+            kubectl rollout status deployment/dev-backend -n auraweb-dev --timeout=5m
+            kubectl rollout status deployment/dev-frontend -n auraweb-dev --timeout=5m
+            kubectl rollout status deployment/dev-admin -n auraweb-dev --timeout=5m
+
+  # ==========================================
+  # Deploy to Production
+  # ==========================================
+  deploy-production:
+    executor: kubernetes/default
+    steps:
+      - checkout
+      - kubernetes/install-kubectl
+      - run:
+          name: Configure kubectl
+          command: |
+            echo $KUBE_CONFIG_PRODUCTION | base64 -d > $HOME/.kube/config
+      - run:
+          name: Deploy to Production
+          command: |
+            kubectl apply -k k8s/overlays/production
+            kubectl set image deployment/prod-backend backend=$DOCKER_REGISTRY/auraweb/backend:$CIRCLE_SHA1 -n auraweb-prod
+            kubectl set image deployment/prod-frontend frontend=$DOCKER_REGISTRY/auraweb/frontend:$CIRCLE_SHA1 -n auraweb-prod
+            kubectl set image deployment/prod-admin admin=$DOCKER_REGISTRY/auraweb/admin:$CIRCLE_SHA1 -n auraweb-prod
+            kubectl set image deployment/prod-gateway gateway=$DOCKER_REGISTRY/auraweb/nginx:$CIRCLE_SHA1 -n auraweb-prod
+            kubectl rollout status deployment/prod-backend -n auraweb-prod --timeout=10m
+            kubectl rollout status deployment/prod-frontend -n auraweb-prod --timeout=10m
+            kubectl rollout status deployment/prod-admin -n auraweb-prod --timeout=10m
+
+# ==========================================
+# Workflows
+# ==========================================
+workflows:
+  version: 2
+  build-test-deploy:
+    jobs:
+      # Lint stage
+      - lint-backend
+      - lint-frontend
+      - lint-admin
+      
+      # Test stage
+      - test-backend:
+          requires:
+            - lint-backend
+      
+      # Security scan
+      - security-scan:
+          requires:
+            - lint-backend
+            - lint-frontend
+            - lint-admin
+      
+      # Build stage
+      - build-backend:
+          requires:
+            - test-backend
+            - security-scan
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+      
+      - build-frontend:
+          requires:
+            - lint-frontend
+            - security-scan
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+      
+      - build-admin:
+          requires:
+            - lint-admin
+            - security-scan
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+      
+      - build-nginx:
+          requires:
+            - security-scan
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+      
+      # Deploy to staging
+      - deploy-staging:
+          requires:
+            - build-backend
+            - build-frontend
+            - build-admin
+            - build-nginx
+          filters:
+            branches:
+              only: develop
+      
+      # Deploy to production (manual approval)
+      - hold-production:
+          type: approval
+          requires:
+            - build-backend
+            - build-frontend
+            - build-admin
+            - build-nginx
+          filters:
+            branches:
+              only: main
+      
+      - deploy-production:
+          requires:
+            - hold-production
+          filters:
+            branches:
+              only: main

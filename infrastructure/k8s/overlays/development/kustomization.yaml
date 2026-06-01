@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - gateway.yaml
+
+namespace: auraweb-dev
+
+# NOTE: no namePrefix — application code hardcodes DNS names like
+# `redis`, `database`, `gateway`, etc. so Services must keep those names.
+# The namespace already isolates dev from prod.
+
+labels:
+  - pairs:
+      environment: development
+
+secretGenerator:
+  - name: app-secrets
+    envs:
+      - secrets.env
+    type: Opaque
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: LOG_LEVEL
+          value: debug

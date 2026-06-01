@@ -1,0 +1,179 @@
+#!/bin/bash
+# Unified Deployment Script
+# Single entry point for all deployment types and environments
+
+set -e
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source libraries
+source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/lib/docker-compose.sh"
+source "${SCRIPT_DIR}/lib/kubernetes.sh"
+source "${SCRIPT_DIR}/lib/interactive.sh"
+
+# Show usage
+show_usage() {
+    cat << EOF
+${BLUE}Unified Deployment Script${NC}
+
+${CYAN}Usage:${NC}
+  $0                                    # Interactive mode
+  $0 <type> <env> [services] [cluster] [options]
+
+${CYAN}Arguments:${NC}
+  type        Deployment type: local, cloud
+  env         Environment: dev, staging, production
+  services    Services to deploy: all, backend, frontend, admin, etc.
+  cluster     Cluster type (local only): docker-compose, minikube, kind, k3d
+
+${CYAN}Options:${NC}
+  --gitops    Use ArgoCD for deployment (cloud only)
+  --version   Specify version tag
+  --dry-run   Show what would be deployed
+  --help      Show this help message
+
+${CYAN}Examples:${NC}
+  $0                                    # Interactive mode
+  $0 local dev                          # Local dev with Docker Compose
+  $0 local dev all minikube             # Local dev with Minikube
+  $0 cloud production all --gitops      # Production with GitOps
+  $0 cloud staging gateway,database     # Staging with specific services
+
+${CYAN}Quick Commands:${NC}
+  $0 local dev                          # Fastest local development
+                                        # Frontend: http://localhost
+                                        # Admin: http://localhost/admin
+                                        # Gateway: http://localhost:8080
+  $0 local staging all minikube         # Test with local Kubernetes
+  $0 cloud production all --gitops      # Production deployment
+
+EOF
+}
+
+# Parse arguments
+parse_arguments() {
+    # If no arguments, use interactive mode
+    if [ $# -eq 0 ]; then
+        interactive_config
+        return
+    fi
+    
+    # Check for help
+    if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+        show_usage
+        exit 0
+    fi
+    
+    # Parse positional arguments (collect non-option args up to 4)
+    local pos_args=()
+    for arg in "$@"; do
+        case "$arg" in
+            --*|-*)
+                break
+                ;;
+            *)
+                pos_args+=("$arg")
+                if [ "${#pos_args[@]}" -eq 4 ]; then
+                    break
+                fi
+                ;;
+        esac
+    done
+
+    DEPLOYMENT_TYPE=${pos_args[0]:-local}
+    ENVIRONMENT=${pos_args[1]:-dev}
+    SERVICES=${pos_args[2]:-all}
+    CLUSTER_TYPE=${pos_args[3]:-docker-compose}
+
+    # Remove the collected positional args so only options remain in $@
+    for i in $(seq 1 ${#pos_args[@]}); do
+        shift
+    done
+
+    USE_GITOPS="false"
+    VERSION=""
+    DRY_RUN="false"
+    
+    # Parse options
+    # Remove up to 4 positional arguments so options (e.g., --dry-run) remain in $@
+    for i in 1 2 3 4; do
+        if [ $# -gt 0 ]; then
+            shift
+        else
+            break
+        fi
+    done
+
+    while [ $# -gt 0 ]; do
+        case $1 in
+            --gitops)
+                USE_GITOPS="true"
+                ;;
+            --version)
+                VERSION="$2"
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN="true"
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+        shift
+    done
+    
+    # Validate arguments
+    if [ "$DEPLOYMENT_TYPE" != "local" ] && [ "$DEPLOYMENT_TYPE" != "cloud" ]; then
+        log_error "Invalid deployment type: $DEPLOYMENT_TYPE"
+        exit 1
+    fi
+    
+    if [ "$ENVIRONMENT" != "dev" ] && [ "$ENVIRONMENT" != "staging" ] && [ "$ENVIRONMENT" != "production" ]; then
+        log_error "Invalid environment: $ENVIRONMENT"
+        exit 1
+    fi
+}
+
+# Main deployment logic
+main() {
+    # Parse arguments
+    parse_arguments "$@"
+    
+    # Show summary
+    if [ "$DRY_RUN" != "true" ]; then
+        show_summary "$DEPLOYMENT_TYPE" "$ENVIRONMENT" "$SERVICES" "$CLUSTER_TYPE" "$USE_GITOPS"
+        echo ""
+    fi
+    
+    # Dry run mode
+    if [ "$DRY_RUN" = "true" ]; then
+        log_info "DRY RUN MODE - No changes will be made"
+        show_summary "$DEPLOYMENT_TYPE" "$ENVIRONMENT" "$SERVICES" "$CLUSTER_TYPE" "$USE_GITOPS"
+        exit 0
+    fi
+    
+    # Execute deployment
+    log_header "🚀 Starting Deployment"
+    echo ""
+    
+    if [ "$DEPLOYMENT_TYPE" = "local" ]; then
+        if [ "$CLUSTER_TYPE" = "docker-compose" ]; then
+            deploy_docker_compose "$ENVIRONMENT" "$SERVICES"
+        else
+            deploy_kubernetes "local" "$ENVIRONMENT" "$SERVICES" "$CLUSTER_TYPE" "$USE_GITOPS"
+        fi
+    else
+        deploy_kubernetes "cloud" "$ENVIRONMENT" "$SERVICES" "$CLUSTER_TYPE" "$USE_GITOPS"
+    fi
+    
+    echo ""
+    log_success "🎉 Deployment completed successfully!"
+}
+
+# Run main function
+main "$@"

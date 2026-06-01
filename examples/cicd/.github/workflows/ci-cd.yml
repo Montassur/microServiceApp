@@ -1,0 +1,486 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, feature/**]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      deployment_type:
+        description: 'Deployment Type'
+        required: true
+        type: choice
+        default: 'local'
+        options:
+          - local
+          - cloud
+      environment:
+        description: 'Environment'
+        required: true
+        type: choice
+        default: 'dev'
+        options:
+          - dev
+          - staging
+          - production
+      services:
+        description: 'Services to deploy'
+        required: false
+        type: choice
+        default: 'all'
+        options:
+          - all
+          - backend
+          - frontend
+          - admin
+          - gateway
+          - database
+          - backend,frontend
+          - backend,database
+          - frontend,admin,gateway
+      cluster_type:
+        description: 'Cluster Type (for local deployments)'
+        required: false
+        type: choice
+        default: 'docker-compose'
+        options:
+          - docker-compose
+          - minikube
+          - kind
+          - k3d
+          - docker-desktop
+      use_gitops:
+        description: 'Use GitOps (ArgoCD) for cloud deployments'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}
+
+jobs:
+  # ==========================================
+  # Lint and Code Quality
+  # ==========================================
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            services/auth-service/package-lock.json
+            services/product-service/package-lock.json
+            services/cart-service/package-lock.json
+            services/order-service/package-lock.json
+            services/analytics-service/package-lock.json
+            apps/frontend/package-lock.json
+            apps/admin/package-lock.json
+
+      - name: Lint Auth Service
+        run: |
+          cd services/auth-service
+          npm ci
+          npm run lint --if-present
+
+      - name: Lint Product Service
+        run: |
+          cd services/product-service
+          npm ci
+          npm run lint --if-present
+
+      - name: Lint Cart Service
+        run: |
+          cd services/cart-service
+          npm ci
+          npm run lint --if-present
+
+      - name: Lint Order Service
+        run: |
+          cd services/order-service
+          npm ci
+          npm run lint --if-present
+
+      - name: Lint Analytics Service
+        run: |
+          cd services/analytics-service
+          npm ci
+          npm run lint --if-present
+
+      - name: Lint Frontend
+        run: |
+          cd apps/frontend
+          npm ci
+          npm run lint --if-present
+
+      - name: Lint Admin
+        run: |
+          cd apps/admin
+          npm ci
+          npm run lint --if-present
+
+  # ==========================================
+  # Microservices Tests
+  # ==========================================
+  test-services:
+    name: Test Services
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [auth-service, product-service, cart-service, order-service, analytics-service]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd services/${{ matrix.service }}
+          npm ci
+
+      - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          REDIS_HOST: localhost
+          JWT_SECRET: test-secret
+        run: |
+          cd services/${{ matrix.service }}
+          npm test --if-present
+
+  # ==========================================
+  # Security Scanning
+  # ==========================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run npm audit (Backend)
+        run: |
+          cd backend
+          npm audit --audit-level=moderate || true
+
+      - name: Run npm audit (Frontend)
+        run: |
+          cd frontend
+          npm audit --audit-level=moderate || true
+
+      - name: Run npm audit (Admin)
+        run: |
+          cd admin
+          npm audit --audit-level=moderate || true
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ==========================================
+  # Build Docker Images
+  # ==========================================
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [lint, test-services, security-scan]
+    if: github.event_name == 'push'
+    strategy:
+      matrix:
+        service: [auth-service, product-service, cart-service, order-service, analytics-service, frontend, admin, nginx]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Determine Context Path
+        id: context
+        run: |
+          if [[ "${{ matrix.service }}" == "frontend" || "${{ matrix.service }}" == "admin" ]]; then
+            echo "path=./apps/${{ matrix.service }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ matrix.service }}" == "nginx" ]]; then
+            echo "path=./infrastructure/nginx" >> $GITHUB_OUTPUT
+          else
+            echo "path=./services/${{ matrix.service }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.context.outputs.path }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+
+  # ==========================================
+  # Deploy to Local (Docker Compose or K8s)
+  # ==========================================
+  deploy-local:
+    name: Deploy to Local
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: |
+      (github.event.inputs.deployment_type == 'local' && github.event.inputs.environment == 'dev') ||
+      github.ref == 'refs/heads/feature/*'
+    environment:
+      name: local
+      url: http://localhost
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Docker Compose Deployment
+      - name: Deploy with Docker Compose
+        if: github.event.inputs.cluster_type == 'docker-compose' || github.event.inputs.cluster_type == ''
+        run: |
+          SERVICES="${{ github.event.inputs.services || 'all' }}"
+          
+          if [ "$SERVICES" = "all" ]; then
+            docker compose up -d
+          else
+            # Deploy only selected services
+            docker compose up -d $SERVICES
+          fi
+          
+          sleep 15
+          
+          # Health checks
+          if docker compose ps | grep -q "backend.*Up"; then
+            curl -f http://localhost:3000/health || echo "Backend health check failed"
+          fi
+          
+          if docker compose ps | grep -q "frontend.*Up"; then
+            curl -f http://localhost || echo "Frontend health check failed"
+          fi
+
+      # Local Kubernetes Deployment
+      - name: Setup Minikube
+        if: github.event.inputs.environment == 'local-k8s' && github.event.inputs.cluster_type == 'minikube'
+        uses: medyagh/setup-minikube@latest
+        with:
+          cpus: 4
+          memory: 8192
+
+      - name: Setup Kind
+        if: github.event.inputs.environment == 'local-k8s' && github.event.inputs.cluster_type == 'kind'
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: auraweb-local
+
+      - name: Deploy to Local Kubernetes
+        if: github.event.inputs.environment == 'local-k8s'
+        run: |
+          chmod +x ./scripts/deploy-k8s-local.sh
+          CLUSTER_TYPE="${{ github.event.inputs.cluster_type || 'minikube' }}"
+          SERVICES="${{ github.event.inputs.services || 'all' }}"
+          
+          ./scripts/deploy-k8s-local.sh $CLUSTER_TYPE deploy "$SERVICES"
+
+      - name: Display service status
+        run: |
+          if [ "${{ github.event.inputs.cluster_type }}" != "docker-compose" ] && [ "${{ github.event.inputs.cluster_type }}" != "" ]; then
+            kubectl get pods -n auraweb-local
+            kubectl get svc -n auraweb-local
+          else
+            docker compose ps
+          fi
+
+      - name: Run tests
+        run: |
+          if [ "${{ github.event.inputs.cluster_type }}" != "docker-compose" ] && [ "${{ github.event.inputs.cluster_type }}" != "" ]; then
+            # K8s tests
+            kubectl wait --for=condition=ready pod -l app=backend -n auraweb-local --timeout=300s || true
+          else
+            # Docker Compose tests
+            docker compose exec -T backend npm run test:ci || true
+          fi
+
+      - name: View logs on failure
+        if: failure()
+        run: |
+          if [ "${{ github.event.inputs.cluster_type }}" != "docker-compose" ] && [ "${{ github.event.inputs.cluster_type }}" != "" ]; then
+            kubectl logs -l app=auraweb -n auraweb-local --tail=100
+          else
+            docker compose logs --tail=100
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ "${{ github.event.inputs.cluster_type }}" != "docker-compose" ] && [ "${{ github.event.inputs.cluster_type }}" != "" ]; then
+            kubectl delete namespace auraweb-local --ignore-not-found=true
+          else
+            docker compose down -v
+          fi
+
+  # ==========================================
+  # Deploy to Staging
+  # ==========================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.auraweb.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -k k8s/overlays/development
+          kubectl set image deployment/dev-backend backend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.sha }} -n auraweb-dev
+          kubectl set image deployment/dev-frontend frontend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }} -n auraweb-dev
+          kubectl set image deployment/dev-admin admin=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/admin:${{ github.sha }} -n auraweb-dev
+          kubectl set image deployment/dev-gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/nginx:${{ github.sha }} -n auraweb-dev
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/dev-backend -n auraweb-dev --timeout=5m
+          kubectl rollout status deployment/dev-frontend -n auraweb-dev --timeout=5m
+          kubectl rollout status deployment/dev-admin -n auraweb-dev --timeout=5m
+
+      - name: Run health checks
+        run: |
+          ./scripts/health-check.sh dev
+
+  # ==========================================
+  # Deploy to Production
+  # ==========================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://auraweb.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -k k8s/overlays/production
+          kubectl set image deployment/prod-backend backend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ github.sha }} -n auraweb-prod
+          kubectl set image deployment/prod-frontend frontend=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }} -n auraweb-prod
+          kubectl set image deployment/prod-admin admin=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/admin:${{ github.sha }} -n auraweb-prod
+          kubectl set image deployment/prod-gateway gateway=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/nginx:${{ github.sha }} -n auraweb-prod
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/prod-backend -n auraweb-prod --timeout=10m
+          kubectl rollout status deployment/prod-frontend -n auraweb-prod --timeout=10m
+          kubectl rollout status deployment/prod-admin -n auraweb-prod --timeout=10m
+
+      - name: Run health checks
+        run: |
+          ./scripts/health-check.sh prod
+
+      - name: Notify deployment
+        if: success()
+        run: |
+          echo "✅ Production deployment successful!"
+          echo "Version: ${{ github.sha }}"
+          echo "URL: https://auraweb.com"

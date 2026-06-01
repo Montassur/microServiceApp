@@ -1,0 +1,11 @@
+# Add .env to gitignore to protect secrets
+.env
+*.env
+!.env.example
+
+# Backup directory
+backups/
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,246 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"  # Manual trigger
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_MERGE_REQUEST_ID
+
+variables:
+  REGISTRY: $CI_REGISTRY
+  IMAGE_PREFIX: $CI_PROJECT_PATH
+  # Deployment configuration (can be set via CI/CD variables or manual trigger)
+  DEPLOYMENT_TYPE: "cloud"  # Options: local, cloud
+  ENVIRONMENT: "dev"         # Options: dev, staging, production
+  SERVICES: "all"            # Options: all, backend, frontend, admin, gateway, database
+  CLUSTER_TYPE: "minikube"   # Options: docker-compose, minikube, kind, k3d, docker-desktop
+  USE_GITOPS: "false"        # Options: true, false
+
+stages:
+  - lint
+  - test
+  - security
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  REGISTRY: $CI_REGISTRY
+  IMAGE_PREFIX: $CI_PROJECT_PATH
+
+# ==========================================
+# Lint Stage
+# ==========================================
+lint:backend:
+  stage: lint
+  image: node:18-alpine
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-backend
+    paths:
+      - backend/node_modules/
+  script:
+    - cd backend
+    - npm ci
+    - npm run lint
+  only:
+    - merge_requests
+    - main
+    - develop
+
+lint:frontend:
+  stage: lint
+  image: node:18-alpine
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-frontend
+    paths:
+      - frontend/node_modules/
+  script:
+    - cd frontend
+    - npm ci
+    - npm run lint
+  only:
+    - merge_requests
+    - main
+    - develop
+
+lint:admin:
+  stage: lint
+  image: node:18-alpine
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-admin
+    paths:
+      - admin/node_modules/
+  script:
+    - cd admin
+    - npm ci
+    - npm run lint
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# ==========================================
+# Test Stage
+# ==========================================
+test:backend:
+  stage: test
+  image: node:18-alpine
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_DB: test_db
+    POSTGRES_USER: test_user
+    POSTGRES_PASSWORD: test_password
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_NAME: test_db
+    DB_USER: test_user
+    DB_PASSWORD: test_password
+    JWT_SECRET: test-jwt-secret-key-for-ci-testing-only-min-32-chars
+    JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci-testing-only-min-32-chars
+    NODE_ENV: test
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-backend
+    paths:
+      - backend/node_modules/
+  script:
+    - cd backend
+    - npm ci
+    - npm run test:ci
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage/cobertura-coverage.xml
+    paths:
+      - backend/coverage/
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# ==========================================
+# Security Scanning
+# ==========================================
+security:npm-audit:
+  stage: security
+  image: node:18-alpine
+  script:
+    - cd backend && npm audit --audit-level=moderate || true
+    - cd ../frontend && npm audit --audit-level=moderate || true
+    - cd ../admin && npm audit --audit-level=moderate || true
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+security:trivy-scan:
+  stage: security
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy fs --exit-code 0 --severity HIGH,CRITICAL --format json -o trivy-report.json .
+    - trivy fs --exit-code 1 --severity CRITICAL .
+  artifacts:
+    reports:
+      container_scanning: trivy-report.json
+    paths:
+      - trivy-report.json
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# ==========================================
+# Build Docker Images
+# ==========================================
+.build_template: &build_template
+  stage: build
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker build -t $REGISTRY/$IMAGE_PREFIX/$SERVICE:$CI_COMMIT_SHA -t $REGISTRY/$IMAGE_PREFIX/$SERVICE:$CI_COMMIT_REF_SLUG ./$SERVICE
+    - docker push $REGISTRY/$IMAGE_PREFIX/$SERVICE:$CI_COMMIT_SHA
+    - docker push $REGISTRY/$IMAGE_PREFIX/$SERVICE:$CI_COMMIT_REF_SLUG
+  only:
+    - main
+    - develop
+
+build:backend:
+  <<: *build_template
+  variables:
+    SERVICE: backend
+
+build:frontend:
+  <<: *build_template
+  variables:
+    SERVICE: frontend
+
+build:admin:
+  <<: *build_template
+  variables:
+    SERVICE: admin
+
+build:nginx:
+  <<: *build_template
+  variables:
+    SERVICE: nginx
+
+# ==========================================
+# Deploy to Staging
+# ==========================================
+deploy:staging:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  environment:
+    name: staging
+    url: https://staging.auraweb.com
+  before_script:
+    - mkdir -p $HOME/.kube
+    - echo "$KUBE_CONFIG_STAGING" | base64 -d > $HOME/.kube/config
+  script:
+    - kubectl apply -k k8s/overlays/development
+    - kubectl set image deployment/dev-backend backend=$REGISTRY/$IMAGE_PREFIX/backend:$CI_COMMIT_SHA -n auraweb-dev
+    - kubectl set image deployment/dev-frontend frontend=$REGISTRY/$IMAGE_PREFIX/frontend:$CI_COMMIT_SHA -n auraweb-dev
+    - kubectl set image deployment/dev-admin admin=$REGISTRY/$IMAGE_PREFIX/admin:$CI_COMMIT_SHA -n auraweb-dev
+    - kubectl set image deployment/dev-gateway gateway=$REGISTRY/$IMAGE_PREFIX/nginx:$CI_COMMIT_SHA -n auraweb-dev
+    - kubectl rollout status deployment/dev-backend -n auraweb-dev --timeout=5m
+    - kubectl rollout status deployment/dev-frontend -n auraweb-dev --timeout=5m
+    - kubectl rollout status deployment/dev-admin -n auraweb-dev --timeout=5m
+  only:
+    - develop
+
+# ==========================================
+# Deploy to Production
+# ==========================================
+deploy:production:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  environment:
+    name: production
+    url: https://auraweb.com
+  before_script:
+    - mkdir -p $HOME/.kube
+    - echo "$KUBE_CONFIG_PRODUCTION" | base64 -d > $HOME/.kube/config
+  script:
+    - kubectl apply -k k8s/overlays/production
+    - kubectl set image deployment/prod-backend backend=$REGISTRY/$IMAGE_PREFIX/backend:$CI_COMMIT_SHA -n auraweb-prod
+    - kubectl set image deployment/prod-frontend frontend=$REGISTRY/$IMAGE_PREFIX/frontend:$CI_COMMIT_SHA -n auraweb-prod
+    - kubectl set image deployment/prod-admin admin=$REGISTRY/$IMAGE_PREFIX/admin:$CI_COMMIT_SHA -n auraweb-prod
+    - kubectl set image deployment/prod-gateway gateway=$REGISTRY/$IMAGE_PREFIX/nginx:$CI_COMMIT_SHA -n auraweb-prod
+    - kubectl rollout status deployment/prod-backend -n auraweb-prod --timeout=10m
+    - kubectl rollout status deployment/prod-frontend -n auraweb-prod --timeout=10m
+    - kubectl rollout status deployment/prod-admin -n auraweb-prod --timeout=10m
+  when: manual
+  only:
+    - main

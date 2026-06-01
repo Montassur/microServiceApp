@@ -1,0 +1,147 @@
+# ==========================================
+# Development Docker Compose Configuration
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# ==========================================
+
+services:
+  # ==========================================
+  # Infrastructure - Development Overrides
+  # ==========================================
+  
+  database:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    # Expose ports for local development tools
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    # No password for development
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    # Expose management UI for development
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  # ==========================================
+  # Frontend Applications - Development
+  # ==========================================
+  
+  frontend:
+    # Expose for direct access
+    ports:
+      - "80:80"
+
+  admin:
+    # Expose for direct access
+    ports:
+      - "8080:80"
+
+  # ==========================================
+  # Gateway - Development
+  # ==========================================
+  
+  gateway:
+    # Expose for API testing
+    ports:
+      - "3080:8080"
+
+  # ==========================================
+  # Backend Services - Development
+  # All services exposed for debugging
+  # ==========================================
+  
+  catalog:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    ports:
+      - "3001:3001"
+
+  inventory:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    ports:
+      - "3006:3006"
+
+  shopping:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    ports:
+      - "3004:3004"
+
+  order-payment:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    ports:
+      - "3002:3002"
+
+  fulfillment:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    ports:
+      - "3003:3003"
+
+  user-auth:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    ports:
+      - "3000:3000"
+
+  platform:
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    ports:
+      - "3005:3005"
+
+  # ==========================================
+  # Monitoring - COMMENTED OUT for Development
+  # Uncomment if you need monitoring locally
+  # ==========================================
+  
+  # prometheus:
+  #   image: prom/prometheus:v3.2.0
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+
+  # grafana:
+  #   image: grafana/grafana:11.5.0
+  #   ports:
+  #     - "3100:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=admin
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   depends_on:
+  #     - prometheus
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  postgres_data:
+  # prometheus_data:  # Uncomment if using monitoring
+  # grafana_data:     # Uncomment if using monitoring

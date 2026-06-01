@@ -1,0 +1,287 @@
+pipeline {
+    agent any
+    
+    parameters {
+        choice(
+            name: 'DEPLOYMENT_TYPE',
+            choices: ['local', 'cloud'],
+            description: 'Deployment Type'
+        )
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'staging', 'production'],
+            description: 'Target Environment'
+        )
+        choice(
+            name: 'SERVICES',
+            choices: ['all', 'backend', 'frontend', 'admin', 'gateway', 'database', 'backend,frontend', 'backend,database'],
+            description: 'Services to Deploy'
+        )
+        choice(
+            name: 'CLUSTER_TYPE',
+            choices: ['docker-compose', 'minikube', 'kind', 'k3d', 'docker-desktop'],
+            description: 'Cluster Type (for local deployments)'
+        )
+        booleanParam(
+            name: 'USE_GITOPS',
+            defaultValue: false,
+            description: 'Use GitOps (ArgoCD) for cloud deployments'
+        )
+    }
+    
+    environment {
+        REGISTRY = 'your-registry.com'
+        IMAGE_PREFIX = 'auraweb'
+        DOCKER_CREDENTIALS = credentials('docker-registry-credentials')
+        KUBE_CONFIG_STAGING = credentials('kube-config-staging')
+        KUBE_CONFIG_PRODUCTION = credentials('kube-config-production')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Lint') {
+            parallel {
+                stage('Lint Backend') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        dir('backend') {
+                            sh 'npm ci'
+                            sh 'npm run lint'
+                        }
+                    }
+                }
+                
+                stage('Lint Frontend') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        dir('frontend') {
+                            sh 'npm ci'
+                            sh 'npm run lint'
+                        }
+                    }
+                }
+                
+                stage('Lint Admin') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        dir('admin') {
+                            sh 'npm ci'
+                            sh 'npm run lint'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Test') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                script {
+                    docker.image('postgres:16-alpine').withRun('-e POSTGRES_DB=test_db -e POSTGRES_USER=test_user -e POSTGRES_PASSWORD=test_password') { c ->
+                        docker.image('postgres:16-alpine').inside("--link ${c.id}:postgres") {
+                            dir('backend') {
+                                sh '''
+                                    export DB_HOST=postgres
+                                    export DB_PORT=5432
+                                    export DB_NAME=test_db
+                                    export DB_USER=test_user
+                                    export DB_PASSWORD=test_password
+                                    export JWT_SECRET=test-jwt-secret-key-for-ci-testing-only-min-32-chars
+                                    export JWT_REFRESH_SECRET=test-refresh-secret-key-for-ci-testing-only-min-32-chars
+                                    export NODE_ENV=test
+                                    npm ci
+                                    npm run test:ci
+                                '''
+                            }
+                        }
+                    }
+                }
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'backend/coverage/lcov-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Coverage Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Security Scan') {
+            parallel {
+                stage('NPM Audit') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        sh '''
+                            cd backend && npm audit --audit-level=moderate || true
+                            cd ../frontend && npm audit --audit-level=moderate || true
+                            cd ../admin && npm audit --audit-level=moderate || true
+                        '''
+                    }
+                }
+                
+                stage('Trivy Scan') {
+                    agent {
+                        docker {
+                            image 'aquasec/trivy:latest'
+                            args '--entrypoint=""'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        sh 'trivy fs --exit-code 0 --severity HIGH,CRITICAL .'
+                    }
+                }
+            }
+        }
+        
+        stage('Build Docker Images') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
+            }
+            parallel {
+                stage('Build Backend') {
+                    steps {
+                        script {
+                            docker.withRegistry("https://${REGISTRY}", 'docker-registry-credentials') {
+                                def image = docker.build("${IMAGE_PREFIX}/backend:${env.GIT_COMMIT}", "./backend")
+                                image.push()
+                                image.push(env.BRANCH_NAME)
+                            }
+                        }
+                    }
+                }
+                
+                stage('Build Frontend') {
+                    steps {
+                        script {
+                            docker.withRegistry("https://${REGISTRY}", 'docker-registry-credentials') {
+                                def image = docker.build("${IMAGE_PREFIX}/frontend:${env.GIT_COMMIT}", "./frontend")
+                                image.push()
+                                image.push(env.BRANCH_NAME)
+                            }
+                        }
+                    }
+                }
+                
+                stage('Build Admin') {
+                    steps {
+                        script {
+                            docker.withRegistry("https://${REGISTRY}", 'docker-registry-credentials') {
+                                def image = docker.build("${IMAGE_PREFIX}/admin:${env.GIT_COMMIT}", "./admin")
+                                image.push()
+                                image.push(env.BRANCH_NAME)
+                            }
+                        }
+                    }
+                }
+                
+                stage('Build Nginx') {
+                    steps {
+                        script {
+                            docker.withRegistry("https://${REGISTRY}", 'docker-registry-credentials') {
+                                def image = docker.build("${IMAGE_PREFIX}/nginx:${env.GIT_COMMIT}", "./nginx")
+                                image.push()
+                                image.push(env.BRANCH_NAME)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Staging') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'kube-config-staging', variable: 'KUBECONFIG')]) {
+                        sh '''
+                            kubectl apply -k k8s/overlays/development
+                            kubectl set image deployment/dev-backend backend=${REGISTRY}/${IMAGE_PREFIX}/backend:${GIT_COMMIT} -n auraweb-dev
+                            kubectl set image deployment/dev-frontend frontend=${REGISTRY}/${IMAGE_PREFIX}/frontend:${GIT_COMMIT} -n auraweb-dev
+                            kubectl set image deployment/dev-admin admin=${REGISTRY}/${IMAGE_PREFIX}/admin:${GIT_COMMIT} -n auraweb-dev
+                            kubectl set image deployment/dev-gateway gateway=${REGISTRY}/${IMAGE_PREFIX}/nginx:${GIT_COMMIT} -n auraweb-dev
+                            kubectl rollout status deployment/dev-backend -n auraweb-dev --timeout=5m
+                            kubectl rollout status deployment/dev-frontend -n auraweb-dev --timeout=5m
+                            kubectl rollout status deployment/dev-admin -n auraweb-dev --timeout=5m
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Deploy to production?', ok: 'Deploy'
+                script {
+                    withCredentials([file(credentialsId: 'kube-config-production', variable: 'KUBECONFIG')]) {
+                        sh '''
+                            kubectl apply -k k8s/overlays/production
+                            kubectl set image deployment/prod-backend backend=${REGISTRY}/${IMAGE_PREFIX}/backend:${GIT_COMMIT} -n auraweb-prod
+                            kubectl set image deployment/prod-frontend frontend=${REGISTRY}/${IMAGE_PREFIX}/frontend:${GIT_COMMIT} -n auraweb-prod
+                            kubectl set image deployment/prod-admin admin=${REGISTRY}/${IMAGE_PREFIX}/admin:${GIT_COMMIT} -n auraweb-prod
+                            kubectl set image deployment/prod-gateway gateway=${REGISTRY}/${IMAGE_PREFIX}/nginx:${GIT_COMMIT} -n auraweb-prod
+                            kubectl rollout status deployment/prod-backend -n auraweb-prod --timeout=10m
+                            kubectl rollout status deployment/prod-frontend -n auraweb-prod --timeout=10m
+                            kubectl rollout status deployment/prod-admin -n auraweb-prod --timeout=10m
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

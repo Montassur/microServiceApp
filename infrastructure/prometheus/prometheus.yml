@@ -1,0 +1,37 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'docker-compose'
+    environment: 'development'
+
+scrape_configs:
+  # Microservices scraping (compose service DNS names)
+  - job_name: 'microservices'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets:
+          - 'user-auth:3000'
+          - 'catalog:3001'
+          - 'order-payment:3002'
+          - 'fulfillment:3003'
+          - 'shopping:3004'
+          - 'platform:3005'
+          - 'inventory:3006'
+        labels:
+          group: 'backend-services'
+
+  # Infrastructure (RabbitMQ has a Prometheus plugin enabled in management image)
+  - job_name: 'rabbitmq'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets:
+          - 'rabbitmq:15692'
+        labels:
+          group: 'infrastructure'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets:
+          - 'localhost:9090'

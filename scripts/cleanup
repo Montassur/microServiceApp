@@ -1,0 +1,232 @@
+#!/bin/bash
+# Unified Cleanup Script
+# Delete local Docker/K8s resources safely
+
+set -e
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source libraries
+source "${SCRIPT_DIR}/lib/common.sh"
+source "${SCRIPT_DIR}/lib/docker-compose.sh"
+source "${SCRIPT_DIR}/lib/kubernetes.sh"
+source "${SCRIPT_DIR}/lib/interactive.sh"
+
+show_usage() {
+    cat << EOF
+${BLUE}Unified Cleanup Script${NC}
+
+${CYAN}Usage:${NC}
+  $0                          # Interactive mode
+  $0 <type> <env> [target] [options]
+
+${CYAN}Arguments:${NC}
+  type        Cleanup type: local, cloud
+  env         Environment: dev, staging, production (cloud/k8s only)
+  target      For local: docker-compose|minikube|kind|k3d|docker-desktop
+              For cloud: unused
+
+${CYAN}Options:${NC}
+  --yes       Skip confirmation prompts
+  --dry-run   Show what would be deleted
+  --help      Show this help message
+
+${CYAN}Examples:${NC}
+  $0 local                    # Interactive local cleanup
+  $0 local dev                # Cleanup local Docker Compose for dev
+  $0 local dev minikube       # Cleanup local Minikube resources for dev
+  $0 cloud dev --dry-run      # Show what would be deleted in cloud dev
+  $0 cloud production --yes   # Force delete production (DANGEROUS!)
+
+EOF
+}
+
+# Parse arguments
+parse_arguments() {
+    # If no args -> interactive
+    if [ $# -eq 0 ]; then
+        interactive_cleanup
+        return
+    fi
+
+    # Help
+    if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+        show_usage
+        exit 0
+    fi
+
+    # Collect non-option positional args up to 3
+    local pos_args=()
+    for arg in "$@"; do
+        case "$arg" in
+            --*|-*)
+                break
+                ;;
+            *)
+                pos_args+=("$arg")
+                if [ "${#pos_args[@]}" -eq 3 ]; then
+                    break
+                fi
+                ;;
+        esac
+    done
+
+    MODE=${pos_args[0]:-local}
+    ENVIRONMENT=${pos_args[1]:-dev}
+    TARGET=${pos_args[2]:-docker-compose}
+
+    # Remove the collected positional args so only options remain
+    for i in $(seq 1 ${#pos_args[@]}); do
+        shift
+    done
+
+    DRY_RUN="false"
+    YES="false"
+
+    while [ $# -gt 0 ]; do
+        case $1 in
+            --dry-run)
+                DRY_RUN="true"
+                ;;
+            --yes|--force|-y)
+                YES="true"
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+        shift
+    done
+
+    # Validate
+    if [ "$MODE" != "local" ] && [ "$MODE" != "cloud" ]; then
+        log_error "Invalid mode: $MODE"
+        exit 1
+    fi
+}
+
+interactive_cleanup() {
+    log_header "🧹 Interactive Cleanup"
+    echo ""
+
+    # Type
+    show_menu "📍 Select Cleanup Type:" "Local (Docker Compose)" "Local (Kubernetes)" "Cloud (Kubernetes)"
+    get_choice 3
+    local type_index=$?
+    case $type_index in
+        0) MODE="local"; TARGET="docker-compose" ;;
+        1) MODE="local"; show_menu "☸️  Select Kubernetes Cluster:" "Minikube" "Kind" "k3d" "Docker Desktop"; get_choice 4; local cluster_index=$?; case $cluster_index in 0) TARGET="minikube";;1) TARGET="kind";;2) TARGET="k3d";;3) TARGET="docker-desktop";;esac ;;
+        2) MODE="cloud"; TARGET="" ;;
+    esac
+
+    # Environment
+    if [ "$MODE" = "cloud" ] || [ "$MODE" = "local" -a "$TARGET" != "docker-compose" ]; then
+        show_menu "🌍 Select Environment:" "Development" "Staging" "Production"
+        get_choice 3
+        local env_index=$?
+        case $env_index in 0) ENVIRONMENT="dev";;1) ENVIRONMENT="staging";;2) ENVIRONMENT="production";;esac
+    else
+        ENVIRONMENT="dev"
+    fi
+
+    # Confirm
+    show_summary "cleanup" "$ENVIRONMENT" "$TARGET" ""
+    echo ""
+    if ! confirm_action "Proceed with cleanup?"; then
+        log_warning "Cleanup cancelled"
+        exit 0
+    fi
+}
+
+# Main cleanup actions
+clean_local_docker_compose() {
+    if [ "$DRY_RUN" = "true" ]; then
+        log_info "DRY RUN - would run: docker compose down -v"
+        log_info "DRY RUN - would run: docker system prune -f"
+        return 0
+    fi
+
+    if [ "$YES" = "true" ]; then
+        log_info "Force cleanup: removing containers, volumes, and pruning system"
+        docker compose down -v
+        docker system prune -f
+    else
+        clean_docker_compose
+    fi
+}
+
+clean_local_k8s() {
+    local cluster_type=$1
+
+    if [ "$DRY_RUN" = "true" ]; then
+        log_info "DRY RUN - would invoke: ${SCRIPT_DIR}/deploy-k8s-local.sh $cluster_type cleanup"
+        return 0
+    fi
+
+    # For safety, disallow automatic production namespace deletion without --yes
+    if [ "$ENVIRONMENT" = "production" ] && [ "$YES" != "true" ]; then
+        log_warning "Production cleanup requires --yes to proceed"
+        exit 1
+    fi
+
+    log_info "Cleaning up local Kubernetes cluster ($cluster_type)..."
+    kubectl delete namespace auraweb-local --ignore-not-found=true
+    log_success "Cleanup complete"
+}
+
+clean_cloud_k8s() {
+    local env=$1
+    local overlay
+    case $env in
+        dev) overlay="development" ;;
+        staging) overlay="development" ;;
+        production) overlay="production" ;;
+    esac
+
+    if [ "$DRY_RUN" = "true" ]; then
+        log_info "DRY RUN - would run: kubectl delete -k k8s/overlays/${overlay}"
+        return 0
+    fi
+
+    if [ "$ENVIRONMENT" = "production" ] && [ "$YES" != "true" ]; then
+        log_warning "Production cleanup requires --yes to proceed"
+        exit 1
+    fi
+
+    log_info "Deleting Kubernetes resources for overlay: $overlay"
+    kubectl delete -k "k8s/overlays/${overlay}"
+    handle_error $? "Failed to delete Kubernetes resources"
+}
+
+# Main
+main() {
+    parse_arguments "$@"
+
+    log_header "🧹 Cleanup Summary"
+    echo -e "  Mode:        ${GREEN}${MODE}${NC}"
+    echo -e "  Environment: ${GREEN}${ENVIRONMENT}${NC}"
+    [ -n "$TARGET" ] && echo -e "  Target:      ${GREEN}${TARGET}${NC}"
+    echo ""
+
+    if [ "$DRY_RUN" = "true" ]; then
+        log_info "DRY RUN MODE - No changes will be made"
+        echo ""
+    fi
+
+    if [ "$MODE" = "local" ]; then
+        if [ "$TARGET" = "docker-compose" ]; then
+            clean_local_docker_compose
+        else
+            clean_local_k8s "$TARGET"
+        fi
+    else
+        clean_cloud_k8s "$ENVIRONMENT"
+    fi
+
+    log_success "Cleanup complete"
+}
+
+main "$@"

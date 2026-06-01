@@ -1,0 +1,373 @@
+services:
+  # 1. Gateway - Nginx reverse proxy for all services
+  gateway:
+    build: ./services/gateway
+    image: gateway:latest
+    container_name: gateway
+    ports:
+      - "3080:80"
+    environment:
+      - CATALOG_SERVICE_URL=http://catalog:3001
+      - ORDER_PAYMENT_SERVICE_URL=http://order-payment:3002
+      - FULFILLMENT_SERVICE_URL=http://fulfillment:3003
+      - SHOPPING_SERVICE_URL=http://shopping:3004
+      - PLATFORM_SERVICE_URL=http://platform:3005
+      - USER_COMM_SERVICE_URL=http://user-auth:3000
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      frontend:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+      catalog:
+        condition: service_healthy
+      order-payment:
+        condition: service_healthy
+      user-auth:
+        condition: service_healthy
+
+  # 2. Infrastructure
+  database:
+    image: postgres:17.2-alpine
+    container_name: database
+    environment:
+      POSTGRES_USER: auraweb_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auraweb_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auraweb_user -d auraweb_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8.4-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:4.2-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Elasticsearch removed - using RediSearch instead (already in Redis 8.4)
+  # This saves ~1-2 GB memory and reduces startup time by 40+ seconds
+
+  # ==========================================
+  # 3. Frontend Applications
+  # ==========================================
+  
+  # Frontend - Customer-facing application
+  frontend:
+    build: ./services/frontend
+    image: frontend:latest
+    container_name: frontend
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      catalog:
+        condition: service_healthy
+      user-auth:
+        condition: service_healthy
+
+  # Admin Panel - Administrative dashboard
+  admin:
+    build: ./services/admin
+    image: admin:latest
+    container_name: admin
+    ports:
+      - "8080:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      catalog:
+        condition: service_healthy
+      user-auth:
+        condition: service_healthy
+
+  # ==========================================
+  # 4. Consolidated Backend Services
+  # ==========================================
+  
+  # Group 1: Catalog
+  catalog:
+    build: ./services/catalog
+    image: catalog:latest
+    container_name: catalog
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=auraweb_db
+      - DB_USER=auraweb_user
+      - DB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # Group 2: Inventory (Standalone)
+  inventory:
+    build: ./services/inventory
+    image: inventory:latest
+    container_name: inventory
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=auraweb_db
+      - DB_USER=auraweb_user
+      - DB_PASSWORD=password
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      database:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # Group 3: Shopping
+  shopping:
+    build: ./services/shopping
+    image: shopping:latest
+    container_name: shopping
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=auraweb_db
+      - DB_USER=auraweb_user
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Group 4: Order & Payment
+  order-payment:
+    build: ./services/order-payment
+    image: order-payment:latest
+    container_name: order-payment
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=auraweb_db
+      - DB_USER=auraweb_user
+      - DB_PASSWORD=password
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      database:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # Group 5: Fulfillment & Promo
+  fulfillment:
+    build: ./services/fulfillment
+    image: fulfillment:latest
+    container_name: fulfillment
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=auraweb_db
+      - DB_USER=auraweb_user
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # Group 6: User & Communication
+  user-auth:
+    build: ./services/user-auth
+    image: user-auth:latest
+    container_name: user-auth
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=auraweb_db
+      - DB_USER=auraweb_user
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - JWT_SECRET=secret
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # Group 7: Platform & Insights
+  platform:
+    build: ./services/platform
+    image: platform:latest
+    container_name: platform
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=auraweb_db
+      - DB_USER=auraweb_user
+      - DB_PASSWORD=password
+      - AMQP_URL=amqp://rabbitmq:5672
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=minio123
+      - AWS_BUCKET_NAME=mybucket
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      database:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # ==========================================
+  # Observability Stack (Commented for Local Dev)
+  # Uncomment when needed for monitoring
+  # ==========================================
+  
+  # # Prometheus - Metrics Collection
+  # prometheus:
+  #   image: prom/prometheus:v3.2.0
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #     - '--web.console.libraries=/etc/prometheus/console_libraries'
+  #     - '--web.console.templates=/etc/prometheus/consoles'
+  #     - '--storage.tsdb.retention.time=30d'
+  #   restart: unless-stopped
+
+  # # Grafana - Metrics Visualization
+  # grafana:
+  #   image: grafana/grafana:11.5.0
+  #   container_name: grafana
+  #   ports:
+  #     - "3100:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=admin
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #     - GF_USERS_ALLOW_SIGN_UP=false
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   depends_on:
+  #     - prometheus
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

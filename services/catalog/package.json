@@ -1,0 +1,29 @@
+{
+    "name": "catalog-service",
+    "version": "1.0.0",
+    "description": "Unified Catalog Service (Product, Review, Search, Recommendation)",
+    "main": "src/index.js",
+    "scripts": {
+        "start": "node src/index.js",
+        "dev": "nodemon src/index.js",
+        "test": "jest",
+        "test:ci": "jest --ci --coverage"
+    },
+    "dependencies": {
+        "amqplib": "^0.10.3",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "helmet": "^7.1.0",
+        "morgan": "^1.10.0",
+        "pg": "^8.11.3",
+        "prom-client": "^15.1.0",
+        "redis": "^4.6.10",
+        "winston": "^3.11.0"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0",
+        "nodemon": "^3.0.1",
+        "supertest": "^6.3.3"
+    }
+}

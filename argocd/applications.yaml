@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: auraweb-staging
+  name: auraweb-dev
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  
+
   source:
-    repoURL: https://github.com/your-org/docker-nginx-react-frontend-admin.git
-    targetRevision: develop
-    path: k8s/overlays/development
+    repoURL: https://github.com/Montassur/microServiceApp.git
+    targetRevision: main
+    path: infrastructure/k8s/overlays/development
   
   destination:
     server: https://kubernetes.default.svc
@@ -52,9 +52,9 @@ spec:
   project: default
   
   source:
-    repoURL: https://github.com/your-org/docker-nginx-react-frontend-admin.git
+    repoURL: https://github.com/Montassur/microServiceApp.git
     targetRevision: main
-    path: k8s/overlays/production
+    path: infrastructure/k8s/overlays/production
   
   destination:
     server: https://kubernetes.default.svc

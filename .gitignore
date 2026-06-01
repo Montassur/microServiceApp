@@ -19,8 +19,8 @@ build/
 !.env.production
 !.env.example
 
-# K8s overlay secrets (real secret values, never commit)
-infrastructure/k8s/overlays/*/secrets.env
+# K8s overlay secrets — dev values are fake/demo, prod must never be committed
+infrastructure/k8s/overlays/production/secrets.env
 
 # Logs
 *.log

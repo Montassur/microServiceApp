@@ -1,0 +1,105 @@
+---
+# Ingress for production. Apache on the host terminates TLS and forwards
+# HTTP to NGINX Ingress on NodePort 30080. Ingress then routes by Host
+# header to the right Service inside the cluster.
+#
+# We do NOT use cert-manager / tls: blocks here — Apache + certbot handle
+# certificates on the host. Ingress only needs to know HTTP and Host.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: storefront
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ecommerce.monta.dev.montassar-benaziza.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: admin
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: admin.monta.dev.montassar-benaziza.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.monta.dev.montassar-benaziza.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 80
+---
+# ArgoCD UI Ingress (lives in argocd namespace — reference uses external name)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: argocd.monta.dev.montassar-benaziza.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80

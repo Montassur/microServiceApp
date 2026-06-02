@@ -68,3 +68,4 @@ coverage/
 *.bak
 *.old
 .env.dev
+.secrets/

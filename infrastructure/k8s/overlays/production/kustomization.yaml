@@ -4,6 +4,8 @@ kind: Kustomization
 resources:
   - ../../base
   - gateway.yaml
+  - ingress.yaml
+  - sealed-secret.yaml
 
 namespace: ecommerce-prod
 
@@ -11,11 +13,40 @@ labels:
   - pairs:
       environment: production
 
-secretGenerator:
-  - name: app-secrets
-    envs:
-      - secrets.env
-    type: Opaque
+# Pull production images from GHCR (built + pushed by GitHub Actions CI).
+# Tag `main` = latest stable from main branch. To pin to a specific commit,
+# change to `sha-<short-sha>` after the CI build.
+images:
+  - name: frontend
+    newName: ghcr.io/montassur/microserviceapp/frontend
+    newTag: main
+  - name: admin
+    newName: ghcr.io/montassur/microserviceapp/admin
+    newTag: main
+  - name: gateway
+    newName: ghcr.io/montassur/microserviceapp/gateway
+    newTag: main
+  - name: user-auth
+    newName: ghcr.io/montassur/microserviceapp/user-auth
+    newTag: main
+  - name: catalog
+    newName: ghcr.io/montassur/microserviceapp/catalog
+    newTag: main
+  - name: order-payment
+    newName: ghcr.io/montassur/microserviceapp/order-payment
+    newTag: main
+  - name: fulfillment
+    newName: ghcr.io/montassur/microserviceapp/fulfillment
+    newTag: main
+  - name: shopping
+    newName: ghcr.io/montassur/microserviceapp/shopping
+    newTag: main
+  - name: platform
+    newName: ghcr.io/montassur/microserviceapp/platform
+    newTag: main
+  - name: inventory
+    newName: ghcr.io/montassur/microserviceapp/inventory
+    newTag: main
 
 patches:
   - target:
@@ -29,3 +60,11 @@ patches:
         value:
           name: LOG_LEVEL
           value: info
+  # Switch backend service imagePullPolicy from IfNotPresent to Always so
+  # ArgoCD picks up new image pushes for the same `:main` tag.
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Always

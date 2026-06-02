@@ -42,8 +42,18 @@ spec:
           value: "3006"
         - name: DB_HOST
           value: "postgres"
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_USER
+        - name: RABBITMQ_PASS
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_PASS
         - name: RABBITMQ_URL
-          value: "amqp://guest:guest@rabbitmq:5672"
+          value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@rabbitmq:5672"
         envFrom:
         - secretRef:
             name: app-secrets

@@ -44,8 +44,18 @@ spec:
           value: "postgres"
         - name: REDIS_HOST
           value: "redis"
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_USER
+        - name: RABBITMQ_PASS
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: RABBITMQ_PASS
         - name: RABBITMQ_URL
-          value: "amqp://guest:guest@rabbitmq:5672"
+          value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@rabbitmq:5672"
         - name: ELASTICSEARCH_URL
           value: "http://elasticsearch:9200"
         envFrom:

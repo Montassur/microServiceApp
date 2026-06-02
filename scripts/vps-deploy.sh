@@ -22,6 +22,8 @@ SUBDOMAINS=(
   "admin"
   "api"
   "argocd"
+  "grafana"
+  "rabbitmq"
 )
 
 set -e
@@ -79,6 +81,35 @@ ok "applications.yaml applied"
 # can't be managed by the ecommerce-prod overlay)
 kubectl apply -f infrastructure/k8s/argocd-ingress.yaml
 ok "argocd-ingress.yaml applied"
+
+# RabbitMQ management UI Ingress (in ecommerce-prod namespace)
+kubectl apply -f infrastructure/k8s/rabbitmq-ingress.yaml
+ok "rabbitmq-ingress.yaml applied"
+
+# Monitoring stack (Prometheus + Grafana + Ingress) — kubectl apply
+# directly rather than via ArgoCD because monitoring is infra, not app
+banner "3.5/8  Deploy monitoring stack"
+kubectl create namespace monitoring 2>/dev/null || true
+kubectl apply -f infrastructure/k8s/monitoring-prod/
+ok "monitoring manifests applied"
+
+# Load Grafana dashboards as a ConfigMap (large JSON, can't use apply
+# due to the 256KB last-applied-configuration annotation limit)
+kubectl create configmap grafana-dashboards \
+  --from-file=ecommerce.json=infrastructure/grafana/dashboards/ecommerce-services.json \
+  --from-file=nodejs.json=infrastructure/grafana/dashboards/nodejs.json \
+  --from-file=rabbitmq.json=infrastructure/grafana/dashboards/rabbitmq.json \
+  -n monitoring 2>/dev/null \
+  && ok "grafana dashboards ConfigMap created" \
+  || ok "grafana dashboards ConfigMap already exists"
+
+# Patch the Grafana deployment to mount the dashboards volume
+kubectl patch deployment grafana -n monitoring --type=json -p='[
+  {"op":"add","path":"/spec/template/spec/volumes/-","value":{"name":"dashboards","configMap":{"name":"grafana-dashboards"}}},
+  {"op":"add","path":"/spec/template/spec/containers/0/volumeMounts/-","value":{"name":"dashboards","mountPath":"/var/lib/grafana/dashboards"}}
+]' 2>/dev/null \
+  && ok "grafana patched to mount dashboards" \
+  || ok "grafana already has dashboards mount"
 
 # Drop the dev Application if it's there (we only deploy prod on this VPS)
 kubectl delete application ecommerce-dev -n argocd --ignore-not-found

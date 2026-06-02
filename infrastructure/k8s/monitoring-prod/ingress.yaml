@@ -1,0 +1,23 @@
+---
+# Grafana — exposed publicly. Has its own login (admin/admin until you
+# change it on first visit), so safe to expose.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grafana.monta.dev.montassar-benaziza.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+# NOTE: Prometheus is intentionally NOT exposed publicly — it has no
+# built-in auth. Grafana queries it internally via cluster DNS.

@@ -1,0 +1,31 @@
+---
+# Standalone Ingress for the ArgoCD UI. Applied separately (NOT via the
+# production overlay) because:
+#   1. ArgoCD lives in `argocd` namespace, not `ecommerce-prod`, and the
+#      overlay's `namespace: ecommerce-prod` would force-rewrite it.
+#   2. ArgoCD shouldn't manage its own Ingress (chicken-and-egg).
+#
+# Apply on the VPS with:
+#   kubectl apply -f infrastructure/k8s/argocd-ingress.yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server
+  namespace: argocd
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: argocd.monta.dev.montassar-benaziza.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80

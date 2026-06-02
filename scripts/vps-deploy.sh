@@ -75,6 +75,11 @@ banner "3/8  Apply ArgoCD Applications"
 kubectl apply -f argocd/applications.yaml
 ok "applications.yaml applied"
 
+# Apply the standalone ArgoCD UI Ingress (lives in argocd namespace,
+# can't be managed by the ecommerce-prod overlay)
+kubectl apply -f infrastructure/k8s/argocd-ingress.yaml
+ok "argocd-ingress.yaml applied"
+
 # Drop the dev Application if it's there (we only deploy prod on this VPS)
 kubectl delete application ecommerce-dev -n argocd --ignore-not-found
 ok "ecommerce-dev removed (we don't run dev on this VPS)"

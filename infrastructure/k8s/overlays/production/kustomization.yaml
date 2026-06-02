@@ -3,7 +3,8 @@ kind: Kustomization
 
 resources:
   - ../../base
-  - gateway.yaml
+  # gateway.yaml (Gateway API) removed — we use regular Ingress in prod
+  # and Gateway API CRDs are not installed on the production cluster.
   - ingress.yaml
   - sealed-secret.yaml
 

@@ -205,8 +205,8 @@ jobs:
             exit 0
           fi
           git add infrastructure/k8s/overlays/production/kustomization.yaml
-          git commit -m "cd: pin prod images to sha-${{ steps.sha.outputs.short }} [skip ci]
-
-Triggered by source commit ${{ github.sha }}
-ArgoCD on the VPS will pick this up and roll out the new pods."
+          git commit \
+            -m "cd: pin prod images to sha-${{ steps.sha.outputs.short }} [skip ci]" \
+            -m "Triggered by source commit ${{ github.sha }}" \
+            -m "ArgoCD on the VPS will pick this up and roll out the new pods."
           git push

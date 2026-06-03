@@ -111,9 +111,8 @@ kubectl patch deployment grafana -n monitoring --type=json -p='[
   && ok "grafana patched to mount dashboards" \
   || ok "grafana already has dashboards mount"
 
-# Drop the dev Application if it's there (we only deploy prod on this VPS)
-kubectl delete application ecommerce-dev -n argocd --ignore-not-found
-ok "ecommerce-dev removed (we don't run dev on this VPS)"
+# Clean up legacy ecommerce-dev Application if a previous run created one
+kubectl delete application ecommerce-dev -n argocd --ignore-not-found 2>/dev/null || true
 
 # Wait for the prod application to register
 sleep 5

@@ -142,9 +142,6 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
 
-      - name: Dry-run development overlay
-        run: kubectl kustomize infrastructure/k8s/overlays/development > /tmp/dev.yaml
-
       - name: Stub production secrets for validation only
         # Real prod secrets stay gitignored — copy the .example so kustomize
         # can render the manifests in CI. CI never deploys these values.

@@ -2,9 +2,31 @@ services:
   frontend:
     ports: !override
       - "9080:80"
+    # Local-only nginx config — uses Docker DNS so gateway hostname
+    # resolves at request time. Production image is unaffected.
+    volumes:
+      - ./services/frontend/nginx.local.conf:/etc/nginx/conf.d/default.conf:ro
+
   admin:
     ports: !override
       - "8081:80"
+    volumes:
+      - ./services/admin/nginx.local.conf:/etc/nginx/conf.d/default.conf:ro
+
+  gateway:
+    # Local-only nginx config — uses Docker DNS for frontend/admin so
+    # gateway can start before they exist. Production image is unaffected.
+    volumes:
+      - ./services/gateway/nginx.local.conf:/etc/nginx/nginx.conf:ro
+    # Break the circular dependency: gateway no longer waits for
+    # frontend/admin (because nginx now lazily resolves them).
+    depends_on: !override
+      catalog:
+        condition: service_healthy
+      order-payment:
+        condition: service_healthy
+      user-auth:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:v3.2.0

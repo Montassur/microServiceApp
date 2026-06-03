@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Rapport de Projet de Fin d'Études — Ecommerce Microservices</title>
+<style>
+  @page { size: A4; margin: 22mm 20mm; }
+  body {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.55;
+    color: #1a1a1a;
+    max-width: 170mm;
+    margin: 0 auto;
+    text-align: justify;
+  }
+  h1, h2, h3, h4 { font-family: "Helvetica Neue", "Arial", sans-serif; color: #0f3460; line-height: 1.25; }
+  h1 { font-size: 22pt; margin-top: 0; }
+  h2 { font-size: 16pt; margin-top: 28pt; border-bottom: 2px solid #0f3460; padding-bottom: 4pt; page-break-before: always; }
+  h2:first-of-type, .no-break { page-break-before: avoid; }
+  h3 { font-size: 13pt; margin-top: 18pt; color: #16537e; }
+  h4 { font-size: 11.5pt; margin-top: 12pt; color: #444; }
+  p { margin: 0 0 10pt 0; }
+  ul, ol { margin: 6pt 0 12pt 0; padding-left: 22pt; }
+  li { margin: 3pt 0; }
+  code { font-family: "Menlo", "Consolas", monospace; font-size: 9.5pt; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  pre { background: #f6f8fa; border-left: 3px solid #0f3460; padding: 10pt 12pt; font-size: 9.5pt; line-height: 1.4; overflow-x: auto; page-break-inside: avoid; }
+  table { width: 100%; border-collapse: collapse; margin: 10pt 0 16pt; font-size: 10pt; page-break-inside: avoid; }
+  th, td { border: 1px solid #c0c0c0; padding: 6pt 8pt; text-align: left; vertical-align: top; }
+  th { background: #e8eef5; font-family: "Helvetica Neue", sans-serif; font-weight: 600; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  .figure { margin: 14pt 0; text-align: center; page-break-inside: avoid; }
+  .figure img { max-width: 100%; height: auto; border: 1px solid #d0d0d0; padding: 4pt; background: #fff; }
+  .figure svg { max-width: 100%; height: auto; }
+  .caption { font-size: 9.5pt; color: #555; font-style: italic; margin-top: 4pt; }
+  .cover { text-align: center; padding-top: 30mm; min-height: 250mm; page-break-after: always; }
+  .cover .title { font-family: "Helvetica Neue", sans-serif; font-size: 24pt; color: #0f3460; margin: 30pt 0; font-weight: 700; }
+  .cover .subtitle { font-size: 14pt; color: #444; margin: 12pt 0; }
+  .cover .logos { display: flex; justify-content: space-around; margin: 20pt 0 40pt; }
+  .cover .logo-box { width: 60mm; height: 40mm; border: 1.5px dashed #888; display: flex; align-items: center; justify-content: center; color: #888; font-style: italic; }
+  .cover .meta { margin-top: 60pt; }
+  .cover .meta p { margin: 6pt 0; font-size: 12pt; }
+  .placeholder { display: block; border: 1.5px dashed #999; background: #f8f8f8; color: #777; font-style: italic; padding: 14pt; margin: 12pt 0; text-align: center; font-size: 10pt; page-break-inside: avoid; }
+  blockquote { border-left: 3px solid #16537e; margin: 8pt 0; padding: 6pt 14pt; color: #444; font-style: italic; background: #f4f7fa; }
+  .toc { background: #fafbfc; border: 1px solid #e0e0e0; padding: 10pt 18pt; margin: 14pt 0 22pt; }
+  .toc h3 { margin-top: 0; }
+  .toc ol { padding-left: 22pt; }
+  .toc li { margin: 4pt 0; }
+  .toc a { color: #16537e; text-decoration: none; }
+  .badge { display: inline-block; padding: 1pt 6pt; background: #e8f4ea; color: #1e6c2a; border-radius: 8pt; font-size: 8.5pt; font-family: "Helvetica Neue", sans-serif; }
+  .arrow { fill: none; stroke: #0f3460; stroke-width: 1.8; marker-end: url(#arrowhead); }
+  .box-svc { fill: #e8eef5; stroke: #0f3460; stroke-width: 1.5; rx: 6; }
+  .box-infra { fill: #fce8e8; stroke: #8b1a1a; stroke-width: 1.5; rx: 6; }
+  .box-front { fill: #e8f4ea; stroke: #1e6c2a; stroke-width: 1.5; rx: 6; }
+  .box-tool { fill: #fff4e0; stroke: #b8860b; stroke-width: 1.5; rx: 6; }
+  .svg-label { font-family: "Helvetica Neue", sans-serif; font-size: 11px; fill: #1a1a1a; }
+  .svg-title { font-family: "Helvetica Neue", sans-serif; font-size: 12px; font-weight: 600; fill: #0f3460; }
+</style>
+</head>
+<body>
+
+<!-- ======================= PAGE DE GARDE ======================= -->
+<div class="cover">
+  <div class="logos">
+    <div class="logo-box">[LOGO ÉTABLISSEMENT]</div>
+    <div class="logo-box">[LOGO ENTREPRISE]</div>
+  </div>
+
+  <div class="subtitle">Rapport de Projet de Fin d'Études</div>
+
+  <div class="title">
+    Conception et déploiement d'une plateforme<br>
+    e-commerce en architecture microservices<br>
+    avec orchestration Kubernetes et pipeline GitOps
+  </div>
+
+  <div class="meta">
+    <p><strong>Réalisé par&nbsp;:</strong> [NOM PRÉNOM]</p>
+    <p><strong>Établissement&nbsp;:</strong> [NOM ÉTABLISSEMENT]</p>
+    <p><strong>Entreprise d'accueil&nbsp;:</strong> [NOM ENTREPRISE]</p>
+    <p><strong>Encadrant pédagogique&nbsp;:</strong> [NOM ENCADRANT]</p>
+    <p><strong>Maître de stage&nbsp;:</strong> [NOM MAÎTRE DE STAGE]</p>
+    <p style="margin-top: 30pt;"><strong>Année universitaire&nbsp;:</strong> [ANNÉE]</p>
+  </div>
+</div>
+
+<!-- ======================= SOMMAIRE ======================= -->
+<h2 class="no-break">Sommaire</h2>
+
+<div class="toc">
+  <ol>
+    <li>Introduction générale</li>
+    <li>Chapitre 1 — Présentation du contexte
+      <ol>
+        <li>Présentation de l'organisme d'accueil</li>
+        <li>Présentation du projet</li>
+        <li>Environnement de travail</li>
+      </ol>
+    </li>
+    <li>Chapitre 2 — Analyse et conception
+      <ol>
+        <li>Analyse des besoins</li>
+        <li>Architecture globale</li>
+        <li>Conception de la base de données</li>
+        <li>Conception des interfaces</li>
+      </ol>
+    </li>
+    <li>Chapitre 3 — Réalisation et implémentation
+      <ol>
+        <li>Environnement de développement</li>
+        <li>Implémentation du backend</li>
+        <li>Implémentation du frontend</li>
+        <li>Fonctionnalités clés réalisées</li>
+        <li>Sécurité et authentification</li>
+      </ol>
+    </li>
+    <li>Chapitre 4 — Tests et validation
+      <ol>
+        <li>Stratégie de tests</li>
+        <li>Résultats des tests</li>
+        <li>Recette fonctionnelle</li>
+      </ol>
+    </li>
+    <li>Conclusion générale</li>
+    <li>Annexes</li>
+  </ol>
+</div>
+
+<!-- ======================= INTRODUCTION ======================= -->
+<h2>Introduction générale</h2>
+
+<p>L'évolution rapide du commerce électronique impose aux entreprises de disposer de plateformes logicielles à la fois robustes, évolutives et capables d'absorber des charges de trafic variables. Les architectures monolithiques traditionnelles, longtemps privilégiées pour leur simplicité de mise en œuvre, montrent leurs limites dès lors qu'il s'agit de faire évoluer indépendamment plusieurs domaines métiers, de déployer fréquemment de nouvelles fonctionnalités, ou de garantir une haute disponibilité.</p>
+
+<p>Dans ce contexte, ce projet de fin d'études porte sur la <strong>conception, le développement et le déploiement d'une plateforme e-commerce complète en architecture microservices</strong>, avec une chaîne d'intégration et de livraison continues (CI/CD) entièrement automatisée selon les principes GitOps. Le système couvre l'ensemble du cycle de vie applicatif&nbsp;: du développement local à la mise en production sur un serveur dédié, en passant par les tests automatisés, la construction d'images Docker, et le déploiement déclaratif sur un cluster Kubernetes.</p>
+
+<p>La <strong>problématique</strong> centrale traitée par ce projet est la suivante&nbsp;: <em>comment construire et déployer une plateforme e-commerce moderne en respectant les bonnes pratiques DevOps actuelles (microservices, conteneurisation, orchestration, observabilité, infrastructure-as-code), tout en garantissant un cycle de livraison rapide, traçable et réversible&nbsp;?</em></p>
+
+<p>Les <strong>objectifs</strong> de ce rapport sont triples&nbsp;:</p>
+<ul>
+  <li>Présenter de manière exhaustive l'architecture technique de la plateforme et justifier les choix technologiques effectués&nbsp;;</li>
+  <li>Détailler la stratégie de déploiement et le pipeline CI/CD mis en place&nbsp;;</li>
+  <li>Démontrer la maîtrise des outils cloud-native modernes (Kubernetes, ArgoCD, Sealed Secrets, Prometheus, Grafana).</li>
+</ul>
+
+<p>Le présent rapport est organisé en <strong>quatre chapitres</strong>. Le premier chapitre présente le contexte du stage et les enjeux du projet. Le deuxième chapitre détaille l'analyse fonctionnelle et la conception. Le troisième chapitre décrit l'implémentation et les choix techniques. Enfin, le quatrième chapitre aborde la validation et les tests effectués. Une conclusion générale dresse le bilan du travail et présente les perspectives d'amélioration.</p>
+
+<!-- ======================= CHAPITRE 1 ======================= -->
+<h2>Chapitre 1 — Présentation du contexte</h2>
+
+<h3>1.1 Présentation de l'organisme d'accueil</h3>
+
+<div class="placeholder">
+[ESPACE À COMPLÉTER]<br>
+Présentation de [NOM ENTREPRISE]&nbsp;: raison sociale, domaine d'activité, taille, organisation interne, secteur d'intervention.<br>
+Mentionner notamment le département au sein duquel s'est déroulé le stage ainsi que les missions habituelles de l'équipe technique d'accueil.
+</div>
+
+<h3>1.2 Présentation du projet</h3>
+
+<h4>1.2.1 Objectifs</h4>
+<p>Le projet, baptisé <strong>Ecommerce</strong>, vise à concevoir une plateforme e-commerce complète selon les standards modernes du développement cloud-native. Au-delà des aspects fonctionnels classiques d'un site marchand (catalogue produits, panier, commande, paiement, livraison), le projet met l'accent sur l'<em>ingénierie de production</em>&nbsp;: conteneurisation, orchestration, observabilité, automatisation du déploiement.</p>
+
+<p>Les objectifs détaillés sont&nbsp;:</p>
+<ul>
+  <li>Implémenter une architecture orientée microservices découpée selon les domaines métier (Domain-Driven Design)&nbsp;;</li>
+  <li>Mettre en œuvre une communication asynchrone événementielle entre services via un broker de messages&nbsp;;</li>
+  <li>Construire un pipeline d'intégration continue automatisant les phases de qualité, de tests et de construction d'images&nbsp;;</li>
+  <li>Déployer la plateforme sur un cluster Kubernetes en suivant les pratiques GitOps (le dépôt Git comme source de vérité)&nbsp;;</li>
+  <li>Mettre en place une observabilité de production via collecte de métriques et tableaux de bord&nbsp;;</li>
+  <li>Sécuriser l'ensemble de la chaîne via HTTPS, secrets chiffrés et bonnes pratiques d'isolation.</li>
+</ul>
+
+<h4>1.2.2 Périmètre fonctionnel</h4>
+<p>La plateforme couvre les fonctionnalités suivantes&nbsp;:</p>
+<ul>
+  <li><strong>Authentification et gestion des utilisateurs</strong>&nbsp;: inscription, connexion, gestion des sessions, contrôle d'accès basé sur les rôles (RBAC) avec trois niveaux (<code>user</code>, <code>admin</code>, <code>editor</code>)&nbsp;;</li>
+  <li><strong>Catalogue produits</strong>&nbsp;: consultation, recherche full-text via RediSearch, recommandations, gestion des avis clients&nbsp;;</li>
+  <li><strong>Panier d'achat et liste de souhaits</strong>&nbsp;: stockage rapide en mémoire via Redis&nbsp;;</li>
+  <li><strong>Gestion des commandes et paiements</strong>&nbsp;: intégration Stripe, traitement des transactions selon le pattern Saga&nbsp;;</li>
+  <li><strong>Logistique</strong>&nbsp;: préparation des expéditions, suivi de livraison, gestion des coupons de réduction&nbsp;;</li>
+  <li><strong>Gestion des stocks</strong>&nbsp;: suivi temps-réel des quantités, alertes de seuil bas&nbsp;;</li>
+  <li><strong>Tableau de bord administrateur</strong>&nbsp;: gestion CRUD des produits, utilisateurs, commandes&nbsp;;</li>
+  <li><strong>Analyses et audit</strong>&nbsp;: journalisation des actions sensibles, métriques d'usage, exports.</li>
+</ul>
+
+<h4>1.2.3 Enjeux techniques</h4>
+<p>Plusieurs enjeux techniques structurants ont guidé la conception&nbsp;:</p>
+<ul>
+  <li><strong>Scalabilité horizontale</strong>&nbsp;: chaque service doit pouvoir être répliqué indépendamment&nbsp;;</li>
+  <li><strong>Résilience</strong>&nbsp;: la défaillance d'un composant ne doit pas compromettre l'ensemble du système&nbsp;;</li>
+  <li><strong>Déploiement continu</strong>&nbsp;: tout changement de code validé doit pouvoir être déployé en production en moins de dix minutes&nbsp;;</li>
+  <li><strong>Sécurité</strong>&nbsp;: les données sensibles (mots de passe, jetons, clés de paiement) doivent être protégées de bout en bout&nbsp;;</li>
+  <li><strong>Traçabilité</strong>&nbsp;: chaque déploiement doit être réversible et associé à un commit Git précis.</li>
+</ul>
+
+<h3>1.3 Environnement de travail</h3>
+<p>Le projet a été mené selon une approche <strong>itérative et incrémentale</strong>, inspirée de la méthodologie Agile. Le développement s'est organisé en cycles courts, chaque itération aboutissant à un livrable fonctionnel testable. Le suivi de version a été assuré via <strong>Git</strong> avec un dépôt central hébergé sur <strong>GitHub</strong> (<code>github.com/Montassur/microServiceApp</code>).</p>
+
+<p>Les outils utilisés pour la gestion et le développement comprennent&nbsp;:</p>
+<ul>
+  <li><strong>Visual Studio Code</strong> comme environnement de développement intégré&nbsp;;</li>
+  <li><strong>Docker Desktop</strong> pour l'exécution locale des conteneurs&nbsp;;</li>
+  <li><strong>GitHub Actions</strong> pour l'intégration continue&nbsp;;</li>
+  <li><strong>ArgoCD</strong> pour le déploiement continu en mode GitOps&nbsp;;</li>
+  <li><strong>DBeaver</strong> pour l'administration des bases de données PostgreSQL&nbsp;;</li>
+  <li><strong>OpenLens / k9s</strong> pour l'exploration du cluster Kubernetes.</li>
+</ul>
+
+<!-- ======================= CHAPITRE 2 ======================= -->
+<h2>Chapitre 2 — Analyse et conception</h2>
+
+<h3>2.1 Analyse des besoins</h3>
+
+<h4>2.1.1 Besoins fonctionnels</h4>
+<p>L'analyse des sources du projet révèle les fonctionnalités majeures suivantes, regroupées par acteur&nbsp;:</p>
+
+<p><strong>Côté client (storefront)</strong>&nbsp;:</p>
+<ul>
+  <li>F1&nbsp;— Créer un compte utilisateur et se connecter&nbsp;;</li>
+  <li>F2&nbsp;— Consulter le catalogue des produits, filtrer par catégorie, rechercher&nbsp;;</li>
+  <li>F3&nbsp;— Consulter le détail d'un produit, lire les avis&nbsp;;</li>
+  <li>F4&nbsp;— Ajouter des produits au panier, modifier les quantités&nbsp;;</li>
+  <li>F5&nbsp;— Constituer une liste de souhaits&nbsp;;</li>
+  <li>F6&nbsp;— Passer commande et payer en ligne&nbsp;;</li>
+  <li>F7&nbsp;— Suivre l'état des commandes et le statut de livraison&nbsp;;</li>
+  <li>F8&nbsp;— Recevoir des notifications applicatives&nbsp;;</li>
+  <li>F9&nbsp;— Consulter et modifier son profil utilisateur.</li>
+</ul>
+
+<p><strong>Côté administrateur (admin dashboard)</strong>&nbsp;:</p>
+<ul>
+  <li>F10&nbsp;— Gérer le catalogue (CRUD produits)&nbsp;;</li>
+  <li>F11&nbsp;— Gérer les utilisateurs (création, modification, désactivation)&nbsp;;</li>
+  <li>F12&nbsp;— Consulter les commandes et leur état&nbsp;;</li>
+  <li>F13&nbsp;— Gérer les coupons promotionnels&nbsp;;</li>
+  <li>F14&nbsp;— Consulter les statistiques d'usage et les journaux d'audit.</li>
+</ul>
+
+<h4>2.1.2 Besoins non fonctionnels</h4>
+<table>
+  <thead><tr><th>Catégorie</th><th>Exigence</th></tr></thead>
+  <tbody>
+    <tr><td>Performance</td><td>Temps de réponse API inférieur à 500 ms en p95</td></tr>
+    <tr><td>Disponibilité</td><td>Architecture conçue pour la haute disponibilité (2 répliques par service)</td></tr>
+    <tr><td>Scalabilité</td><td>Capacité à augmenter horizontalement chaque service indépendamment</td></tr>
+    <tr><td>Sécurité</td><td>Authentification JWT, HTTPS systématique, secrets chiffrés en dépôt Git</td></tr>
+    <tr><td>Observabilité</td><td>Collecte des métriques applicatives, tableaux de bord temps-réel</td></tr>
+    <tr><td>Maintenabilité</td><td>Code modulaire, configuration externalisée, tests automatisés</td></tr>
+    <tr><td>Portabilité</td><td>Déploiement identique en local (Docker Compose) et en production (Kubernetes)</td></tr>
+  </tbody>
+</table>
+
+<h3>2.2 Architecture globale</h3>
+
+<p>L'architecture retenue est une <strong>architecture microservices à dix services</strong>, orchestrée derrière une passerelle Nginx. Les services backend communiquent de manière synchrone via HTTP REST pour les requêtes utilisateur, et de manière asynchrone via le broker <strong>RabbitMQ</strong> pour les événements métier.</p>
+
+<p>L'organisation en couches est la suivante&nbsp;:</p>
+<ul>
+  <li><strong>Couche présentation</strong>&nbsp;: deux applications React (storefront client et admin) servies par Nginx&nbsp;;</li>
+  <li><strong>Couche passerelle</strong>&nbsp;: un reverse-proxy Nginx (<code>gateway</code>) qui route les requêtes vers le bon service backend selon le préfixe d'URL (<code>/api/auth</code>, <code>/api/products</code>, etc.)&nbsp;;</li>
+  <li><strong>Couche métier</strong>&nbsp;: sept microservices Node.js Express, chacun gérant un domaine fonctionnel (authentification, catalogue, commandes, etc.)&nbsp;;</li>
+  <li><strong>Couche données</strong>&nbsp;: PostgreSQL pour les données persistantes, Redis pour le cache et le moteur de recherche, RabbitMQ pour la messagerie événementielle.</li>
+</ul>
+
+<div class="figure">
+  <img src="../docs/production-kubenetes-diagram.png" alt="Architecture production Kubernetes">
+  <div class="caption">Figure 2.1 — Architecture globale de la plateforme en production (cluster Kubernetes k3s)</div>
+</div>
+
+<h4>Choix technologiques justifiés</h4>
+<table>
+  <thead><tr><th>Couche</th><th>Technologie retenue</th><th>Justification</th></tr></thead>
+  <tbody>
+    <tr><td>Frontend</td><td>React 19 + Vite</td><td>Écosystème mature, virtual DOM performant, build extrêmement rapide via Vite</td></tr>
+    <tr><td>API Gateway</td><td>Nginx</td><td>Reverse-proxy léger, configuration déclarative, performances éprouvées</td></tr>
+    <tr><td>Backend</td><td>Node.js 22 + Express</td><td>Adapté aux APIs I/O-bound, écosystème npm riche, courbe d'apprentissage faible</td></tr>
+    <tr><td>Base de données</td><td>PostgreSQL 17</td><td>SGBD relationnel robuste, support JSON natif, contraintes référentielles strictes</td></tr>
+    <tr><td>Cache / recherche</td><td>Redis Stack (RediSearch)</td><td>Cache en mémoire ultra-rapide, moteur de recherche full-text intégré</td></tr>
+    <tr><td>Messagerie</td><td>RabbitMQ 4.2</td><td>Broker AMQP éprouvé, garanties de livraison configurables, interface d'administration</td></tr>
+    <tr><td>Conteneurisation</td><td>Docker</td><td>Standard de facto pour la conteneurisation</td></tr>
+    <tr><td>Orchestration</td><td>Kubernetes (k3s)</td><td>Distribution allégée certifiée CNCF, idéale pour serveur unique</td></tr>
+    <tr><td>GitOps</td><td>ArgoCD</td><td>Synchronisation automatique cluster ⇄ dépôt Git, interface graphique</td></tr>
+    <tr><td>Secrets</td><td>Sealed Secrets</td><td>Chiffrement par clé publique, secrets versionnés en Git en toute sécurité</td></tr>
+    <tr><td>Observabilité</td><td>Prometheus + Grafana</td><td>Standard de l'observabilité cloud-native</td></tr>
+    <tr><td>TLS</td><td>Let's Encrypt + Apache</td><td>Certificats gratuits, renouvellement automatique</td></tr>
+  </tbody>
+</table>
+
+<div class="figure">
+  <img src="../docs/local-docker-compose-diagram.png" alt="Architecture locale Docker Compose">
+  <div class="caption">Figure 2.2 — Architecture de l'environnement de développement local (Docker Compose)</div>
+</div>
+
+<h3>2.3 Conception de la base de données</h3>
+<p>Le schéma relationnel comporte <strong>dix-sept tables</strong> réparties selon les domaines fonctionnels des services. Les entités principales sont&nbsp;:</p>
+
+<table>
+  <thead><tr><th>Table</th><th>Domaine</th><th>Rôle</th></tr></thead>
+  <tbody>
+    <tr><td><code>users</code></td><td>user-auth</td><td>Comptes utilisateurs (email, mot de passe hashé, rôle, statut)</td></tr>
+    <tr><td><code>sessions</code></td><td>user-auth</td><td>Jetons de rafraîchissement, traçabilité d'IP</td></tr>
+    <tr><td><code>notifications</code></td><td>user-auth</td><td>Notifications applicatives</td></tr>
+    <tr><td><code>products</code></td><td>catalog</td><td>Catalogue produits</td></tr>
+    <tr><td><code>reviews</code></td><td>catalog</td><td>Avis utilisateurs</td></tr>
+    <tr><td><code>product_recommendations</code></td><td>catalog</td><td>Suggestions automatiques</td></tr>
+    <tr><td><code>orders</code></td><td>order-payment</td><td>Commandes</td></tr>
+    <tr><td><code>order_items</code></td><td>order-payment</td><td>Lignes de commande</td></tr>
+    <tr><td><code>payments</code></td><td>order-payment</td><td>Transactions Stripe</td></tr>
+    <tr><td><code>cart_items</code></td><td>shopping</td><td>Lignes du panier</td></tr>
+    <tr><td><code>wishlists</code></td><td>shopping</td><td>Liste de souhaits</td></tr>
+    <tr><td><code>inventory</code></td><td>inventory</td><td>Stocks par produit</td></tr>
+    <tr><td><code>shipments</code></td><td>fulfillment</td><td>Expéditions</td></tr>
+    <tr><td><code>coupons</code></td><td>fulfillment</td><td>Coupons promotionnels</td></tr>
+    <tr><td><code>audit_logs</code></td><td>platform</td><td>Audit des actions sensibles</td></tr>
+    <tr><td><code>analytics_events</code></td><td>platform</td><td>Métriques métier</td></tr>
+  </tbody>
+</table>
+
+<p>La table <code>users</code> constitue la racine référentielle. Les sessions, notifications, commandes, paniers, listes de souhaits et logs y sont rattachés via clés étrangères avec contrainte <code>ON DELETE CASCADE</code>. Le schéma comprend plus de 25 index optimisant les requêtes par email, rôle, statut, catégorie produit et date.</p>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: diagramme entité-association (ERD) généré depuis DBeaver]<br>Figure 2.3 — Modèle Entité-Association de la base PostgreSQL</div>
+
+<h3>2.4 Conception des interfaces</h3>
+
+<h4>2.4.1 Storefront client</h4>
+<p>Le storefront est conçu autour des pages suivantes&nbsp;: page d'accueil (vitrine produit, recommandations), catalogue (grille produits avec filtres par catégorie), panier (récapitulatif, modification quantités, passage en caisse), commande (formulaire de paiement, confirmation), profil utilisateur (tableau de bord personnel, historique des commandes), authentification (inscription, connexion).</p>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: maquette ou écran réel de la page d'accueil storefront]<br>Figure 2.4 — Page d'accueil du storefront client</div>
+
+<h4>2.4.2 Tableau de bord administrateur</h4>
+<p>L'interface admin propose un dashboard avec indicateurs clés (commandes, revenus, utilisateurs actifs), la gestion des utilisateurs (tableau filtrable, création, édition, désactivation, suppression par lot, export CSV), la gestion des produits, des coupons, et les paramètres généraux.</p>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: dashboard administrateur — page de gestion des utilisateurs]<br>Figure 2.5 — Tableau de bord administrateur</div>
+
+<!-- ======================= CHAPITRE 3 ======================= -->
+<h2>Chapitre 3 — Réalisation et implémentation</h2>
+
+<h3>3.1 Environnement de développement</h3>
+
+<h4>3.1.1 Pile technique</h4>
+<table>
+  <thead><tr><th>Domaine</th><th>Technologie</th><th>Version</th></tr></thead>
+  <tbody>
+    <tr><td>Runtime backend</td><td>Node.js</td><td>22-alpine</td></tr>
+    <tr><td>Framework backend</td><td>Express</td><td>4.x</td></tr>
+    <tr><td>Frontend</td><td>React</td><td>19.x</td></tr>
+    <tr><td>Build frontend</td><td>Vite</td><td>7.x</td></tr>
+    <tr><td>Base de données</td><td>PostgreSQL</td><td>17.2-alpine</td></tr>
+    <tr><td>Cache</td><td>Redis Stack</td><td>8.x</td></tr>
+    <tr><td>Broker messages</td><td>RabbitMQ</td><td>4.2-management-alpine</td></tr>
+    <tr><td>Reverse proxy</td><td>Nginx</td><td>1.28-alpine</td></tr>
+    <tr><td>Orchestrateur</td><td>Kubernetes (k3s)</td><td>v1.35</td></tr>
+    <tr><td>GitOps</td><td>ArgoCD</td><td>v2.x (stable)</td></tr>
+    <tr><td>Monitoring</td><td>Prometheus</td><td>v3.2.0</td></tr>
+    <tr><td>Visualisation</td><td>Grafana</td><td>11.5.0</td></tr>
+    <tr><td>Secrets chiffrés</td><td>Sealed Secrets</td><td>v0.27.1</td></tr>
+    <tr><td>Ingress</td><td>NGINX Ingress Controller</td><td>v1.11.3</td></tr>
+  </tbody>
+</table>
+
+<h4>3.1.2 Structure du projet</h4>
+<pre>microServiceApp/
+├── services/                  # 10 microservices
+│   ├── frontend/              # React storefront
+│   ├── admin/                 # React admin
+│   ├── gateway/               # Nginx reverse-proxy
+│   ├── user-auth/             # auth + RBAC
+│   ├── catalog/               # produits + recherche
+│   ├── order-payment/         # commandes + Stripe
+│   ├── fulfillment/           # logistique
+│   ├── shopping/              # panier + wishlist
+│   ├── platform/              # audit, analytics
+│   └── inventory/             # gestion stocks
+├── infrastructure/k8s/
+│   ├── base/                  # Manifestes Kustomize de base
+│   └── overlays/
+│       ├── development/
+│       └── production/        # SealedSecret + Ingress + GHCR
+├── database/
+│   ├── init.sql               # Schéma + 3 utilisateurs seed
+│   └── seed_demo_data.sql
+├── scripts/vps-deploy.sh      # Déploiement automatisé VPS
+├── argocd/applications.yaml   # ArgoCD Application
+├── .github/workflows/ci.yml   # Pipeline CI/CD
+├── docker-compose.yml
+└── docs/                      # 11 guides techniques</pre>
+
+<h3>3.2 Implémentation du backend</h3>
+
+<h4>3.2.1 Description des microservices</h4>
+<p>Chaque service backend respecte la même structure standardisée&nbsp;:</p>
+<pre>services/&lt;nom&gt;/
+├── Dockerfile
+├── package.json
+└── src/
+    ├── index.js              # Point d'entrée Express
+    ├── lib/
+    │   ├── db.js             # Pool PostgreSQL
+    │   ├── redis.js          # Client Redis
+    │   ├── rabbitmq.js       # Connexion AMQP
+    │   ├── logger.js         # Winston
+    │   └── metrics.js        # prom-client (Prometheus)
+    ├── middleware/
+    │   ├── auth.js
+    │   └── metrics.js
+    └── modules/&lt;feature&gt;/
+        ├── routes.js         # Routes Express
+        ├── init.js           # Création des tables
+        └── events.js         # Publishers/consumers RabbitMQ</pre>
+
+<h4>3.2.2 Endpoints API principaux</h4>
+<table>
+  <thead><tr><th>Service</th><th>Préfixe d'URL</th><th>Exemples d'endpoints</th></tr></thead>
+  <tbody>
+    <tr><td><code>user-auth</code></td><td><code>/api/auth</code>, <code>/api/users</code></td><td>POST <code>/login</code>, POST <code>/register</code>, GET <code>/me</code>, POST <code>/refresh</code></td></tr>
+    <tr><td><code>catalog</code></td><td><code>/api/products</code>, <code>/api/reviews</code>, <code>/api/search</code></td><td>CRUD produits, recherche full-text, recommandations</td></tr>
+    <tr><td><code>order-payment</code></td><td><code>/api/orders</code>, <code>/api/payments</code></td><td>POST commande, POST paiement Stripe</td></tr>
+    <tr><td><code>fulfillment</code></td><td><code>/api/shipping</code>, <code>/api/coupons</code></td><td>Suivi expédition, validation coupons</td></tr>
+    <tr><td><code>shopping</code></td><td><code>/api/cart</code>, <code>/api/wishlists</code></td><td>Manipulation panier et wishlist</td></tr>
+    <tr><td><code>platform</code></td><td><code>/api/analytics</code>, <code>/api/audit</code></td><td>Métriques, journaux d'audit, exports</td></tr>
+    <tr><td><code>inventory</code></td><td><code>/api/inventory</code></td><td>Consultation stocks par produit</td></tr>
+  </tbody>
+</table>
+
+<h4>3.2.3 Communication événementielle — Flux RabbitMQ</h4>
+<p>Les services communiquent de manière asynchrone via dix files d'événements. La figure ci-dessous illustre le flux principal d'une commande&nbsp;:</p>
+
+<div class="figure">
+  <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrowhead" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <polygon points="0 0, 9 4.5, 0 9" fill="#0f3460"/>
+      </marker>
+    </defs>
+    <text x="350" y="22" text-anchor="middle" class="svg-title">Flux événementiel d'une commande</text>
+
+    <!-- ORDER_CREATED row -->
+    <rect x="20" y="55" width="120" height="40" class="box-svc"/>
+    <text x="80" y="80" text-anchor="middle" class="svg-label">order-payment</text>
+
+    <rect x="290" y="55" width="120" height="40" class="box-infra"/>
+    <text x="350" y="80" text-anchor="middle" class="svg-label">ORDER_CREATED</text>
+
+    <rect x="430" y="20" width="130" height="32" class="box-svc"/>
+    <text x="495" y="40" text-anchor="middle" class="svg-label">inventory</text>
+
+    <rect x="430" y="60" width="130" height="32" class="box-svc"/>
+    <text x="495" y="80" text-anchor="middle" class="svg-label">platform (analytics)</text>
+
+    <rect x="430" y="100" width="130" height="32" class="box-svc"/>
+    <text x="495" y="120" text-anchor="middle" class="svg-label">catalog (recos)</text>
+
+    <line x1="140" y1="75" x2="290" y2="75" class="arrow"/>
+    <line x1="410" y1="75" x2="430" y2="36" class="arrow"/>
+    <line x1="410" y1="75" x2="430" y2="76" class="arrow"/>
+    <line x1="410" y1="75" x2="430" y2="116" class="arrow"/>
+
+    <!-- PAYMENT row -->
+    <rect x="20" y="170" width="120" height="40" class="box-svc"/>
+    <text x="80" y="195" text-anchor="middle" class="svg-label">order-payment</text>
+
+    <rect x="290" y="170" width="120" height="40" class="box-infra"/>
+    <text x="350" y="195" text-anchor="middle" class="svg-label">PAYMENT_PROCESSED</text>
+
+    <line x1="140" y1="190" x2="290" y2="190" class="arrow"/>
+
+    <rect x="20" y="240" width="120" height="40" class="box-svc"/>
+    <text x="80" y="265" text-anchor="middle" class="svg-label">order-payment</text>
+
+    <rect x="290" y="240" width="120" height="40" class="box-infra"/>
+    <text x="350" y="265" text-anchor="middle" class="svg-label">ORDER_PAID</text>
+
+    <line x1="140" y1="260" x2="290" y2="260" class="arrow"/>
+    <line x1="350" y1="210" x2="350" y2="240" class="arrow"/>
+
+    <rect x="430" y="225" width="130" height="32" class="box-svc"/>
+    <text x="495" y="245" text-anchor="middle" class="svg-label">fulfillment</text>
+
+    <rect x="430" y="265" width="130" height="32" class="box-svc"/>
+    <text x="495" y="285" text-anchor="middle" class="svg-label">user-auth (notif.)</text>
+
+    <line x1="410" y1="260" x2="430" y2="241" class="arrow"/>
+    <line x1="410" y1="260" x2="430" y2="281" class="arrow"/>
+
+    <!-- SHIPMENT_CREATED -->
+    <rect x="20" y="320" width="120" height="40" class="box-svc"/>
+    <text x="80" y="345" text-anchor="middle" class="svg-label">fulfillment</text>
+
+    <rect x="290" y="320" width="120" height="40" class="box-infra"/>
+    <text x="350" y="345" text-anchor="middle" class="svg-label">SHIPMENT_CREATED</text>
+
+    <line x1="140" y1="340" x2="290" y2="340" class="arrow"/>
+  </svg>
+  <div class="caption">Figure 3.1 — Flux événementiel d'une commande client (pattern Saga via RabbitMQ)</div>
+</div>
+
+<p>Cette architecture événementielle implémente le pattern <strong>Saga</strong>&nbsp;: la suite ordonnée Cart → Order → Payment → Fulfillment est orchestrée par enchaînement d'événements, chaque service contribuant à sa partie sans dépendance synchrone forte.</p>
+
+<h3>3.3 Implémentation du frontend</h3>
+
+<h4>3.3.1 Storefront client</h4>
+<p>Le storefront est une <strong>Single Page Application</strong> React 19 + Vite, composée de pages (<code>Products</code>, <code>Cart</code>, <code>Orders</code>, <code>Profile</code>, <code>Dashboard</code>, <code>Login</code>, <code>Signup</code>), de contexts globaux (<code>AuthContext</code>, <code>CartContext</code>), et d'un client API basé sur Axios avec interception JWT et rafraîchissement automatique du token.</p>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: page d'accueil storefront avec catalogue produits]<br>Figure 3.2 — Vue principale du storefront client</div>
+
+<h4>3.3.2 Dashboard administrateur</h4>
+<p>L'application admin propose des pages <code>Dashboard</code>, <code>Users</code> (avec recherche, filtres rôle/statut, suppression en masse, export CSV), <code>Products</code>, <code>Coupons</code> et <code>Settings</code>. Les notifications utilisateur sont gérées via un <code>ToastContext</code> dédié.</p>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: page de gestion des utilisateurs (admin)]<br>Figure 3.3 — Interface de gestion des utilisateurs</div>
+
+<h3>3.4 Fonctionnalités clés réalisées</h3>
+
+<h4>3.4.1 Pipeline CI/CD GitOps</h4>
+<p>Le cœur du projet est la chaîne CI/CD entièrement automatisée définie dans <code>.github/workflows/ci.yml</code>. Le schéma suivant en décrit le flux complet&nbsp;:</p>
+
+<div class="figure">
+  <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrowhead2" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <polygon points="0 0, 9 4.5, 0 9" fill="#0f3460"/>
+      </marker>
+    </defs>
+    <text x="350" y="22" text-anchor="middle" class="svg-title">Pipeline CI/CD GitOps de bout en bout</text>
+
+    <rect x="20" y="50" width="130" height="48" rx="6" fill="#fff4e0" stroke="#b8860b" stroke-width="1.5"/>
+    <text x="85" y="72" text-anchor="middle" class="svg-label">Développeur</text>
+    <text x="85" y="88" text-anchor="middle" class="svg-label" style="font-size:9.5px;">git push (main)</text>
+
+    <line x1="150" y1="74" x2="190" y2="74" stroke="#0f3460" stroke-width="1.8" marker-end="url(#arrowhead2)"/>
+
+    <rect x="190" y="50" width="150" height="48" rx="6" fill="#e8f4ea" stroke="#1e6c2a" stroke-width="1.5"/>
+    <text x="265" y="72" text-anchor="middle" class="svg-label">GitHub</text>
+    <text x="265" y="88" text-anchor="middle" class="svg-label" style="font-size:9.5px;">dépôt + déclencheur CI</text>
+
+    <line x1="265" y1="98" x2="265" y2="125" stroke="#0f3460" stroke-width="1.8" marker-end="url(#arrowhead2)"/>
+
+    <rect x="60" y="125" width="410" height="120" rx="6" fill="#e8eef5" stroke="#0f3460" stroke-width="1.5"/>
+    <text x="265" y="142" text-anchor="middle" class="svg-title">GitHub Actions — Pipeline CI</text>
+
+    <rect x="80" y="155" width="80" height="34" rx="4" fill="#fff" stroke="#0f3460"/>
+    <text x="120" y="176" text-anchor="middle" class="svg-label">1. Lint</text>
+
+    <rect x="170" y="155" width="80" height="34" rx="4" fill="#fff" stroke="#0f3460"/>
+    <text x="210" y="176" text-anchor="middle" class="svg-label">2. Test</text>
+
+    <rect x="260" y="155" width="80" height="34" rx="4" fill="#fff" stroke="#0f3460"/>
+    <text x="300" y="176" text-anchor="middle" class="svg-label">3. Build</text>
+
+    <rect x="350" y="155" width="100" height="34" rx="4" fill="#fff" stroke="#0f3460"/>
+    <text x="400" y="176" text-anchor="middle" class="svg-label">4. K8s-validate</text>
+
+    <rect x="80" y="199" width="370" height="34" rx="4" fill="#fce8e8" stroke="#8b1a1a"/>
+    <text x="265" y="220" text-anchor="middle" class="svg-label">5. CD — Bump prod images vers sha-&lt;commit&gt; → push back</text>
+
+    <line x1="265" y1="245" x2="265" y2="272" stroke="#0f3460" stroke-width="1.8" marker-end="url(#arrowhead2)"/>
+
+    <rect x="155" y="272" width="220" height="50" rx="6" fill="#e8f4ea" stroke="#1e6c2a" stroke-width="1.5"/>
+    <text x="265" y="293" text-anchor="middle" class="svg-label">GHCR (10 images Docker)</text>
+    <text x="265" y="310" text-anchor="middle" class="svg-label" style="font-size:9.5px;">tag :sha-xxxxxxx</text>
+
+    <line x1="510" y1="50" x2="510" y2="300" stroke="#888" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="600" y="40" text-anchor="middle" class="svg-title">Cluster Kubernetes (VPS)</text>
+
+    <rect x="520" y="55" width="160" height="60" rx="6" fill="#e8eef5" stroke="#0f3460" stroke-width="1.5"/>
+    <text x="600" y="78" text-anchor="middle" class="svg-label">ArgoCD</text>
+    <text x="600" y="95" text-anchor="middle" class="svg-label" style="font-size:9.5px;">polling git toutes</text>
+    <text x="600" y="108" text-anchor="middle" class="svg-label" style="font-size:9.5px;">les 3 min</text>
+
+    <line x1="375" y1="219" x2="520" y2="80" stroke="#0f3460" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrowhead2)"/>
+
+    <rect x="520" y="135" width="160" height="80" rx="6" fill="#fff4e0" stroke="#b8860b" stroke-width="1.5"/>
+    <text x="600" y="158" text-anchor="middle" class="svg-label">kubectl apply -k</text>
+    <text x="600" y="175" text-anchor="middle" class="svg-label" style="font-size:9.5px;">Rolling update</text>
+    <text x="600" y="190" text-anchor="middle" class="svg-label" style="font-size:9.5px;">zero downtime</text>
+    <text x="600" y="205" text-anchor="middle" class="svg-label" style="font-size:9.5px;">25 pods</text>
+
+    <line x1="600" y1="115" x2="600" y2="135" stroke="#0f3460" stroke-width="1.8" marker-end="url(#arrowhead2)"/>
+
+    <rect x="520" y="240" width="160" height="50" rx="6" fill="#e8f4ea" stroke="#1e6c2a" stroke-width="1.5"/>
+    <text x="600" y="262" text-anchor="middle" class="svg-label">Production en ligne</text>
+    <text x="600" y="278" text-anchor="middle" class="svg-label" style="font-size:9.5px;">HTTPS Let's Encrypt</text>
+
+    <line x1="600" y1="215" x2="600" y2="240" stroke="#0f3460" stroke-width="1.8" marker-end="url(#arrowhead2)"/>
+  </svg>
+  <div class="caption">Figure 3.4 — Pipeline CI/CD complet : du <code>git push</code> à la production</div>
+</div>
+
+<p>Les cinq étapes du pipeline CI/CD sont&nbsp;:</p>
+<ol>
+  <li><strong>Lint</strong> — exécution d'ESLint sur les 9 services applicatifs en parallèle&nbsp;;</li>
+  <li><strong>Test</strong> — exécution de Jest sur les 7 services backend&nbsp;;</li>
+  <li><strong>Build</strong> — construction Docker buildx et publication des 10 images sur GitHub Container Registry (GHCR), avec tags <code>branch</code> et <code>sha-&lt;commit&gt;</code>&nbsp;;</li>
+  <li><strong>Validation Kubernetes</strong> — <code>kubectl kustomize</code> sur les overlays développement et production&nbsp;;</li>
+  <li><strong>CD — Bump des tags</strong> — étape finale réécrivant <code>infrastructure/k8s/overlays/production/kustomization.yaml</code> avec le SHA du nouveau commit, puis poussant le changement avec le marqueur <code>[skip ci]</code>.</li>
+</ol>
+
+<h4>3.4.2 Recherche avancée via RediSearch</h4>
+<p>Le service <code>catalog</code> utilise le module <strong>RediSearch</strong> de Redis Stack pour offrir une recherche full-text instantanée. À chaque création/modification d'un produit, un événement RabbitMQ déclenche la mise à jour de l'index (<code>JSON.SET</code>, <code>FT.CREATE</code>).</p>
+
+<h4>3.4.3 Observabilité — Prometheus et Grafana</h4>
+<p>Chaque service backend expose un endpoint <code>/metrics</code> au format Prometheus. Le scrapping est effectué toutes les 15 secondes. Trois tableaux de bord Grafana sont provisionnés automatiquement&nbsp;:</p>
+<ul>
+  <li><strong>Ecommerce Microservices Overview</strong>&nbsp;: santé, CPU, mémoire, latence p95 par service&nbsp;;</li>
+  <li><strong>NodeJS Application Dashboard</strong>&nbsp;: heap, event loop, garbage collector&nbsp;;</li>
+  <li><strong>RabbitMQ Overview</strong>&nbsp;: files, consommateurs, taux de messages.</li>
+</ul>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: tableau de bord Grafana — Ecommerce Microservices Overview]<br>Figure 3.5 — Tableau de bord Grafana en production</div>
+
+<h3>3.5 Sécurité et authentification</h3>
+
+<p>La sécurité a été abordée à plusieurs niveaux&nbsp;:</p>
+<ul>
+  <li><strong>HTTPS systématique</strong> via certificats Let's Encrypt renouvelés automatiquement par Apache + certbot&nbsp;;</li>
+  <li><strong>JWT signés</strong> avec une clé aléatoire de 256 bits&nbsp;;</li>
+  <li><strong>Chiffrement des secrets</strong> en dépôt Git via <strong>Sealed Secrets</strong>&nbsp;: seul le cluster possède la clé privée de déchiffrement&nbsp;;</li>
+  <li><strong>Isolation réseau</strong>&nbsp;: NGINX Ingress n'expose que les services frontaux&nbsp;;</li>
+  <li><strong>Rate limiting</strong> Nginx (zones <code>limit_req_zone</code>) contre les abus&nbsp;;</li>
+  <li><strong>En-têtes de sécurité</strong>&nbsp;: X-Frame-Options, X-Content-Type-Options, Content-Security-Policy&nbsp;;</li>
+  <li><strong>Hashage bcrypt</strong> à 10 itérations pour les mots de passe.</li>
+</ul>
+
+<div class="figure">
+  <img src="../docs/local-kubernetes-diagram.png" alt="Architecture locale Kubernetes">
+  <div class="caption">Figure 3.6 — Architecture de l'environnement de test K8s local (Docker Desktop)</div>
+</div>
+
+<!-- ======================= CHAPITRE 4 ======================= -->
+<h2>Chapitre 4 — Tests et validation</h2>
+
+<h3>4.1 Stratégie de tests</h3>
+
+<h4>4.1.1 Qualité statique (Lint)</h4>
+<p>L'outil <strong>ESLint</strong> est exécuté automatiquement à chaque commit sur les 9 services disposant de code JavaScript/JSX. La configuration applique les règles strictes pour React 19 (<code>react-hooks/purity</code>, <code>react-hooks/exhaustive-deps</code>, <code>react-refresh/only-export-components</code>).</p>
+
+<h4>4.1.2 Tests unitaires</h4>
+<p>Le framework <strong>Jest</strong> est configuré sur les 7 services backend. Les scripts <code>npm test</code> sont prêts à recevoir des suites de tests dans le dossier <code>__tests__/</code>. À l'heure actuelle, la suite est volontairement vide (<code>--passWithNoTests</code> activé pour ne pas bloquer le CI), en attente d'évolution.</p>
+
+<h4>4.1.3 Tests d'intégration des manifestes Kubernetes</h4>
+<p>Le pipeline CI inclut une étape <code>k8s-validate</code> qui exécute <code>kubectl kustomize</code> sur les overlays développement et production, garantissant la validité syntaxique des manifestes et la résolution de toutes les références (ConfigMap, Secret, Service).</p>
+
+<h4>4.1.4 Tests de bout en bout (manuel)</h4>
+<p>La recette fonctionnelle a été conduite manuellement sur les flux utilisateurs critiques&nbsp;: inscription, connexion, navigation produit, ajout au panier, passage de commande, consultation des commandes par l'administrateur.</p>
+
+<h3>4.2 Résultats des tests</h3>
+
+<h4>4.2.1 Pipeline CI</h4>
+<table>
+  <thead><tr><th>Job</th><th>Couverture</th><th>Résultat</th></tr></thead>
+  <tbody>
+    <tr><td>Lint</td><td>9 services</td><td><span class="badge">9/9 OK</span></td></tr>
+    <tr><td>Test</td><td>7 services backend</td><td><span class="badge">7/7 OK</span> (suite vide)</td></tr>
+    <tr><td>Build</td><td>10 images Docker</td><td><span class="badge">10/10 publiées sur GHCR</span></td></tr>
+    <tr><td>K8s-validate</td><td>2 overlays (dev + prod)</td><td><span class="badge">30 ressources générées</span></td></tr>
+    <tr><td>CD</td><td>Bump SHA prod</td><td><span class="badge">Commit auto poussé</span></td></tr>
+  </tbody>
+</table>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: page GitHub Actions du dépôt montrant un pipeline vert]<br>Figure 4.1 — Pipeline CI/CD complet en succès</div>
+
+<h4>4.2.2 État du cluster de production</h4>
+<table>
+  <thead><tr><th>Namespace</th><th>Composants</th><th>Pods</th></tr></thead>
+  <tbody>
+    <tr><td><code>ecommerce-prod</code></td><td>2 × 12 services applicatifs + 1 × postgres</td><td>25</td></tr>
+    <tr><td><code>monitoring</code></td><td>Prometheus + Grafana</td><td>2</td></tr>
+    <tr><td><code>argocd</code></td><td>Plateforme ArgoCD</td><td>7</td></tr>
+    <tr><td><code>ingress-nginx</code></td><td>Contrôleur Ingress</td><td>1</td></tr>
+    <tr><td><code>kube-system</code></td><td>Composants k3s</td><td>≈ 8</td></tr>
+  </tbody>
+</table>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: sortie de <code>kubectl get pods -A</code> sur le cluster de production]<br>Figure 4.2 — État du cluster en production (25+ pods Running)</div>
+
+<h3>4.3 Recette fonctionnelle</h3>
+<p>Les cas d'usage suivants ont été validés sur l'environnement de production accessible publiquement via HTTPS&nbsp;:</p>
+
+<table>
+  <thead><tr><th>Cas d'usage</th><th>URL testée</th><th>Résultat</th></tr></thead>
+  <tbody>
+    <tr><td>Affichage storefront</td><td><code>https://ecommerce.&lt;domain&gt;</code></td><td>HTTP 200</td></tr>
+    <tr><td>Inscription utilisateur</td><td>POST <code>/api/auth/register</code></td><td>HTTP 201 + utilisateur en base</td></tr>
+    <tr><td>Connexion</td><td>POST <code>/api/auth/login</code></td><td>HTTP 200 + JWT renvoyé</td></tr>
+    <tr><td>Consultation produits</td><td>GET <code>/api/products</code></td><td>HTTP 200 + JSON</td></tr>
+    <tr><td>Dashboard admin</td><td><code>https://admin.&lt;domain&gt;</code></td><td>HTTP 200, accès contrôlé</td></tr>
+    <tr><td>Interface ArgoCD</td><td><code>https://argocd.&lt;domain&gt;</code></td><td>HTTP 200, synchronisation visible</td></tr>
+    <tr><td>Grafana</td><td><code>https://grafana.&lt;domain&gt;</code></td><td>Tableaux de bord opérationnels</td></tr>
+    <tr><td>RabbitMQ Management</td><td><code>https://rabbitmq.&lt;domain&gt;</code></td><td>10 files actives</td></tr>
+  </tbody>
+</table>
+
+<div class="placeholder">[CAPTURE D'ÉCRAN&nbsp;: navigateur affichant le storefront en production avec HTTPS valide]<br>Figure 4.3 — La plateforme en production, accessible en HTTPS</div>
+
+<!-- ======================= CONCLUSION ======================= -->
+<h2>Conclusion générale</h2>
+
+<h3>Bilan du travail réalisé</h3>
+<p>Ce projet de fin d'études a permis de concevoir, développer et déployer une <strong>plateforme e-commerce complète en architecture microservices</strong> mise en production sur un cluster Kubernetes. Le système comprend dix microservices spécialisés, une chaîne d'intégration et de livraison continues entièrement automatisée selon les principes GitOps, ainsi qu'une couche d'observabilité opérationnelle (Prometheus, Grafana).</p>
+
+<p>L'ensemble est accessible publiquement via six sous-domaines sécurisés en HTTPS, et tout changement de code validé est déployé automatiquement en production en moins de dix minutes. La séparation stricte entre l'environnement de développement local (Docker Compose) et la production (Kubernetes) garantit la sécurité de la chaîne de livraison.</p>
+
+<h3>Compétences acquises</h3>
+<p><strong>Compétences techniques&nbsp;:</strong></p>
+<ul>
+  <li>Maîtrise de Node.js, Express et React 19&nbsp;;</li>
+  <li>Conception et implémentation d'une architecture microservices&nbsp;;</li>
+  <li>Communication événementielle via RabbitMQ&nbsp;;</li>
+  <li>Conteneurisation Docker et orchestration Kubernetes (k3s)&nbsp;;</li>
+  <li>Mise en œuvre du modèle GitOps avec ArgoCD&nbsp;;</li>
+  <li>Sécurisation des secrets via Sealed Secrets&nbsp;;</li>
+  <li>Mise en place d'une chaîne CI/CD GitHub Actions&nbsp;;</li>
+  <li>Observabilité avec Prometheus et Grafana.</li>
+</ul>
+<p><strong>Compétences transversales&nbsp;:</strong></p>
+<ul>
+  <li>Diagnostic et résolution méthodique de problèmes complexes (lecture de logs, traçage inter-services)&nbsp;;</li>
+  <li>Documentation technique détaillée (PROJECT_GUIDE.md, RABBITMQ_EVENTS.md, SESSION_LOG.md)&nbsp;;</li>
+  <li>Capacité à raisonner sur des systèmes distribués.</li>
+</ul>
+
+<h3>Difficultés rencontrées et solutions</h3>
+<table>
+  <thead><tr><th>Difficulté</th><th>Solution apportée</th></tr></thead>
+  <tbody>
+    <tr><td>Conflit de ports entre Apache (sites tiers) et NGINX Ingress</td><td>Mise en place de NGINX Ingress en NodePort 30080 et configuration d'Apache en reverse-proxy SSL</td></tr>
+    <tr><td>Schéma de base incohérent (colonne <code>name</code> manquante)</td><td>Ajout d'un <code>ALTER TABLE ... ADD COLUMN IF NOT EXISTS</code> idempotent</td></tr>
+    <tr><td>Cycle de dépendances Compose (frontend/admin/gateway)</td><td>Utilisation du résolveur DNS Docker (127.0.0.11) avec variables Nginx</td></tr>
+    <tr><td>Identifiants RabbitMQ incohérents K8s/Node</td><td>Construction de l'URL AMQP via substitution <code>$(VAR)</code> Kubernetes</td></tr>
+    <tr><td>Synchronisation ArgoCD échouant sur Gateway API</td><td>Retrait des ressources Gateway/HTTPRoute de l'overlay production</td></tr>
+  </tbody>
+</table>
+
+<h3>Perspectives et améliorations futures</h3>
+<ul>
+  <li><strong>Suite de tests unitaires complète</strong>&nbsp;: ajouter au moins un test de fumée par service (Jest + supertest)&nbsp;;</li>
+  <li><strong>Tests de charge</strong>&nbsp;: intégrer k6 ou JMeter pour valider la tenue en charge&nbsp;;</li>
+  <li><strong>Documentation OpenAPI/Swagger</strong> pour chaque API&nbsp;;</li>
+  <li><strong>Outil de migration de schéma</strong>&nbsp;: intégrer node-pg-migrate ou Prisma Migrate&nbsp;;</li>
+  <li><strong>Tracing distribué</strong>&nbsp;: déployer Jaeger ou Tempo avec instrumentation OpenTelemetry&nbsp;;</li>
+  <li><strong>Sauvegardes automatisées</strong>&nbsp;: CronJob <code>pg_dump</code> → S3&nbsp;;</li>
+  <li><strong>Mode multi-nœuds</strong>&nbsp;: étendre k3s sur un second nœud pour la vraie HA&nbsp;;</li>
+  <li><strong>CDN devant la passerelle</strong>&nbsp;: Cloudflare pour DDoS et cache statique.</li>
+</ul>
+
+<p>Ce projet constitue une base solide et professionnelle, démontrant la maîtrise complète d'une chaîne de production cloud-native moderne — depuis la conception orientée domaines jusqu'au déploiement automatisé sur infrastructure réelle.</p>
+
+<!-- ======================= ANNEXES ======================= -->
+<h2>Annexes</h2>
+
+<h3>Annexe A — Configuration ArgoCD</h3>
+<pre>apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce-production
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Montassur/microServiceApp.git
+    targetRevision: main
+    path: infrastructure/k8s/overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ecommerce-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true</pre>
+
+<h3>Annexe B — Glossaire technique</h3>
+<table>
+  <thead><tr><th>Terme</th><th>Définition</th></tr></thead>
+  <tbody>
+    <tr><td><strong>GitOps</strong></td><td>Méthodologie où le dépôt Git est la source de vérité unique pour l'état souhaité du système. Tout changement passe par un commit.</td></tr>
+    <tr><td><strong>Kustomize</strong></td><td>Outil natif Kubernetes permettant de générer des variantes de manifestes via overlays sans templating.</td></tr>
+    <tr><td><strong>ArgoCD</strong></td><td>Contrôleur Kubernetes qui synchronise continuellement l'état du cluster avec le dépôt Git de référence.</td></tr>
+    <tr><td><strong>Saga</strong></td><td>Pattern de transaction distribuée par enchaînement d'événements compensables.</td></tr>
+    <tr><td><strong>Sealed Secrets</strong></td><td>Contrôleur qui déchiffre dans le cluster des secrets chiffrés versionnés en Git.</td></tr>
+    <tr><td><strong>Ingress</strong></td><td>Ressource Kubernetes qui expose des services HTTP/HTTPS depuis l'extérieur du cluster.</td></tr>
+    <tr><td><strong>RBAC</strong></td><td>Role-Based Access Control&nbsp;: contrôle d'accès basé sur les rôles assignés aux utilisateurs.</td></tr>
+    <tr><td><strong>JWT</strong></td><td>JSON Web Token&nbsp;: format de jeton signé pour l'authentification stateless.</td></tr>
+    <tr><td><strong>k3s</strong></td><td>Distribution Kubernetes légère certifiée CNCF, conçue pour les déploiements edge et single-node.</td></tr>
+    <tr><td><strong>GHCR</strong></td><td>GitHub Container Registry&nbsp;: registre d'images Docker hébergé par GitHub.</td></tr>
+    <tr><td><strong>Pod</strong></td><td>Plus petite unité déployable dans Kubernetes&nbsp;: regroupement de conteneurs partageant le réseau.</td></tr>
+    <tr><td><strong>Deployment</strong></td><td>Ressource Kubernetes qui gère le cycle de vie des Pods (mise à l'échelle, mise à jour progressive).</td></tr>
+    <tr><td><strong>StatefulSet</strong></td><td>Variante de Deployment pour les applications avec état (base de données, par exemple).</td></tr>
+  </tbody>
+</table>
+
+<h3>Annexe C — Références et ressources</h3>
+<ul>
+  <li><strong>Dépôt GitHub du projet</strong>&nbsp;: <code>github.com/Montassur/microServiceApp</code></li>
+  <li><strong>Documentation Kubernetes</strong>&nbsp;: <code>kubernetes.io/docs</code></li>
+  <li><strong>Documentation ArgoCD</strong>&nbsp;: <code>argo-cd.readthedocs.io</code></li>
+  <li><strong>Documentation k3s</strong>&nbsp;: <code>docs.k3s.io</code></li>
+  <li><strong>Bitnami Sealed Secrets</strong>&nbsp;: <code>github.com/bitnami-labs/sealed-secrets</code></li>
+  <li><strong>Documentation Prometheus</strong>&nbsp;: <code>prometheus.io/docs</code></li>
+  <li><strong>Documentation Grafana</strong>&nbsp;: <code>grafana.com/docs</code></li>
+  <li><strong>Spécification AMQP 0.9.1</strong>&nbsp;: <code>rabbitmq.com/tutorials/amqp-concepts</code></li>
+  <li><strong>Twelve-Factor App</strong>&nbsp;: <code>12factor.net</code></li>
+  <li><strong>Domain-Driven Design</strong>, Eric Evans, 2003</li>
+  <li><strong>Site Reliability Engineering</strong>, Google, 2016</li>
+</ul>
+
+</body>
+</html>

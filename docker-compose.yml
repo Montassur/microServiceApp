@@ -314,9 +314,6 @@ services:
       - DB_USER=ecommerce_user
       - DB_PASSWORD=password
       - AMQP_URL=amqp://rabbitmq:5672
-      - AWS_ACCESS_KEY_ID=minio
-      - AWS_SECRET_ACCESS_KEY=minio123
-      - AWS_BUCKET_NAME=mybucket
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3005/health"]
       interval: 30s

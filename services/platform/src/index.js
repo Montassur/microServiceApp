@@ -23,7 +23,6 @@ const initAnalyticsModule = require('./modules/analytics/init');
 const setupAnalyticsEvents = require('./modules/analytics/events');
 
 const reportingRoutes = require('./modules/reporting/routes');
-const fileRoutes = require('./modules/file/routes');
 
 const PORT = process.env.PORT || 3005;
 
@@ -56,7 +55,7 @@ const startServer = async () => {
             res.status(200).json({
                 status: 'UP',
                 service: 'platform-insights-service',
-                modules: ['audit', 'analytics', 'reporting', 'file']
+                modules: ['audit', 'analytics', 'reporting']
             });
         });
 
@@ -74,7 +73,6 @@ const startServer = async () => {
         app.use('/api/audit', auditRoutes);
         app.use('/api/analytics', analyticsRoutes);
         app.use('/api/reports', reportingRoutes);
-        app.use('/api/files', fileRoutes);
 
         // Start Server
         app.listen(PORT, () => {

@@ -152,3 +152,64 @@ jobs:
 
       - name: Dry-run production overlay
         run: kubectl kustomize infrastructure/k8s/overlays/production > /tmp/prod.yaml
+
+  # ============================================================================
+  # CD — bump the production overlay image tags to the new commit SHA, then
+  # commit back so ArgoCD on the VPS picks it up and rolls out. Runs only
+  # on push to main, after all 10 images have been built and pushed to GHCR.
+  # ============================================================================
+  cd-bump-prod-tags:
+    name: Bump prod image tags
+    runs-on: ubuntu-latest
+    needs: [build, k8s-validate]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write   # needed for git push back
+    steps:
+      - name: Checkout (with token that can push)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Compute short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Bump every image tag in production kustomization
+        run: |
+          SHA_TAG="sha-${{ steps.sha.outputs.short }}"
+          KUST=infrastructure/k8s/overlays/production/kustomization.yaml
+          for svc in frontend admin gateway user-auth catalog order-payment fulfillment shopping platform inventory; do
+            # Replace `newTag: <anything>` for this service with the new SHA
+            # Each image block looks like:
+            #   - name: <svc>
+            #     newName: ghcr.io/montassur/microserviceapp/<svc>
+            #     newTag: main           ← this line is what we replace
+            python3 - <<PY
+          import re, pathlib
+          path = pathlib.Path("$KUST")
+          text = path.read_text()
+          # Locate the block for this service and rewrite its newTag
+          pattern = r"(- name: $svc\n    newName: ghcr\.io/montassur/microserviceapp/$svc\n    newTag: )\S+"
+          text2 = re.sub(pattern, lambda m: m.group(1) + "$SHA_TAG", text)
+          path.write_text(text2)
+          PY
+          done
+          echo "=== diff ==="
+          git diff $KUST | head -40
+
+      - name: Commit and push if changed
+        run: |
+          git config user.email "ci@ecommerce.local"
+          git config user.name "GitHub Actions CD"
+          if git diff --quiet infrastructure/k8s/overlays/production/kustomization.yaml; then
+            echo "no image tag changes — skipping commit"
+            exit 0
+          fi
+          git add infrastructure/k8s/overlays/production/kustomization.yaml
+          git commit -m "cd: pin prod images to sha-${{ steps.sha.outputs.short }} [skip ci]
+
+Triggered by source commit ${{ github.sha }}
+ArgoCD on the VPS will pick this up and roll out the new pods."
+          git push

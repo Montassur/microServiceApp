@@ -9,7 +9,6 @@ import Products from './pages/Products';
 import Orders from './pages/Orders';
 import Coupons from './pages/Coupons';
 import Settings from './pages/Settings';
-import Reports from './pages/Reports';
 import Login from './pages/Login';
 import './index.css';
 
@@ -55,7 +54,6 @@ function AdminLayout() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/coupons" element={<Coupons />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/reports" element={<Reports />} />
           </Routes>
         </div>
       </main>

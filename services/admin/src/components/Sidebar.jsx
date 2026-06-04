@@ -68,13 +68,6 @@ function Sidebar() {
                     <span className="nav-icon">⚙️</span>
                     Settings
                 </Link>
-                <Link
-                    to="/admin/reports"
-                    className={`nav-item ${isActive('/admin/reports') ? 'active' : ''}`}
-                >
-                    <span className="nav-icon">📈</span>
-                    Reports
-                </Link>
             </nav>
 
             <div className="sidebar-footer">

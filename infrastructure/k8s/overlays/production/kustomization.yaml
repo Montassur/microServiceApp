@@ -20,34 +20,34 @@ labels:
 images:
   - name: frontend
     newName: ghcr.io/montassur/microserviceapp/frontend
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: admin
     newName: ghcr.io/montassur/microserviceapp/admin
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: gateway
     newName: ghcr.io/montassur/microserviceapp/gateway
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: user-auth
     newName: ghcr.io/montassur/microserviceapp/user-auth
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: catalog
     newName: ghcr.io/montassur/microserviceapp/catalog
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: order-payment
     newName: ghcr.io/montassur/microserviceapp/order-payment
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: fulfillment
     newName: ghcr.io/montassur/microserviceapp/fulfillment
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: shopping
     newName: ghcr.io/montassur/microserviceapp/shopping
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: platform
     newName: ghcr.io/montassur/microserviceapp/platform
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
   - name: inventory
     newName: ghcr.io/montassur/microserviceapp/inventory
-    newTag: sha-b2f50b4
+    newTag: sha-a305263
 
 patches:
   - target:

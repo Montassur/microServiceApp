@@ -82,6 +82,18 @@ const businessMetrics = {
     })
 };
 
+// Email Notification Counter
+// Bumped every time the user-auth service attempts to send a transactional
+// email. The `type` label identifies the email purpose (e.g. order_paid,
+// settings_updated, 2fa_login). `status` is "sent" or "failed" or "skipped".
+// Query in Grafana:  rate(notifications_emails_sent_total[5m])
+const emailsSentTotal = new client.Counter({
+    name: 'notifications_emails_sent_total',
+    help: 'Total number of transactional emails dispatched (or skipped)',
+    labelNames: ['type', 'status'],
+    registers: [register]
+});
+
 module.exports = {
     register,
     httpRequestDuration,
@@ -91,5 +103,6 @@ module.exports = {
     redisOperationDuration,
     rabbitmqMessagesTotal,
     errorTotal,
-    businessMetrics
+    businessMetrics,
+    emailsSentTotal,
 };

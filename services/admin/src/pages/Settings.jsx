@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { authAPI } from '../api/client';
+import { authAPI, notificationsAPI } from '../api/client';
 import OTPModal from '../components/OTPModal';
 import './Settings.css';
 
@@ -72,11 +72,33 @@ function Settings() {
         dateFormat: 'YYYY-MM-DD',
         theme: 'dark',
         emailNotifications: true,
-        pushNotifications: false,
     });
 
-    const handleSave = () => {
-        toast.success('Settings saved successfully!');
+    // Load the current notification preference from the backend
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const res = await notificationsAPI.getPreferences();
+                setSettings((prev) => ({ ...prev, emailNotifications: !!res.data.emailNotifications }));
+            } catch (e) {
+                console.error('Failed to load notification preferences', e);
+            }
+        };
+        load();
+    }, []);
+
+    const handleSave = async () => {
+        try {
+            // Save the only setting that's actually persisted on the backend
+            await notificationsAPI.updatePreferences(settings.emailNotifications);
+            toast.success(
+                settings.emailNotifications
+                    ? 'Settings saved — a confirmation email has been sent.'
+                    : 'Settings saved.'
+            );
+        } catch (err) {
+            toast.error(err?.response?.data?.error || 'Could not save settings');
+        }
     };
 
     const handleReset = () => {
@@ -243,42 +265,33 @@ function Settings() {
                 {activeTab === 'notifications' && (
                     <div className="settings-section">
                         <div className="card">
-                            <h3>Notification Preferences</h3>
-                            <div className="toggle-group">
-                                <div className="toggle-item">
-                                    <div>
-                                        <div className="toggle-label">Email Notifications</div>
-                                        <div className="toggle-description">Receive email updates about your account</div>
-                                    </div>
-                                    <label className="toggle-switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={settings.emailNotifications}
-                                            onChange={(e) => handleChange('emailNotifications', e.target.checked)}
-                                        />
-                                        <span className="toggle-slider"></span>
-                                    </label>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, padding: '4px 0' }}>
+                                <div style={{ flex: 1 }}>
+                                    <h3 style={{ marginTop: 0, marginBottom: 8 }}>Email Notifications</h3>
+                                    <p style={{ color: 'rgba(255,255,255,0.7)', margin: '0 0 12px 0' }}>
+                                        Receive an email at <strong>{user?.email || 'your address'}</strong> whenever:
+                                    </p>
+                                    <ul style={{ color: 'rgba(255,255,255,0.65)', margin: 0, paddingLeft: 20, lineHeight: 1.8, fontSize: 14 }}>
+                                        <li>A customer pays for an order</li>
+                                        <li>Your admin settings are changed</li>
+                                        <li>Critical security events happen on your account</li>
+                                    </ul>
                                 </div>
-
-                                <div className="toggle-item">
-                                    <div>
-                                        <div className="toggle-label">Push Notifications</div>
-                                        <div className="toggle-description">Get push notifications in your browser</div>
-                                    </div>
-                                    <label className="toggle-switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={settings.pushNotifications}
-                                            onChange={(e) => handleChange('pushNotifications', e.target.checked)}
-                                        />
-                                        <span className="toggle-slider"></span>
-                                    </label>
-                                </div>
-
+                                <label className="toggle-switch" style={{ marginTop: 4 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={settings.emailNotifications}
+                                        onChange={(e) => handleChange('emailNotifications', e.target.checked)}
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </label>
                             </div>
-                            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: '12px' }}>
-                                Notifications service required for these toggles to take effect.
-                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18, padding: 12, background: 'rgba(56,189,248,0.08)', borderRadius: 8, border: '1px solid rgba(56,189,248,0.2)' }}>
+                                <span style={{ fontSize: 18 }}>💡</span>
+                                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>
+                                    Click <strong>Save Changes</strong> below to apply. A test email confirms the channel is alive.
+                                </span>
+                            </div>
                         </div>
                     </div>
                 )}

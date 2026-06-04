@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_2fa_enabled BOOLEAN DEFAULT false,
     email_otp VARCHAR(255),
     email_otp_expires_at TIMESTAMP,
+    notifications_enabled BOOLEAN DEFAULT true,
     role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin', 'editor')),
     is_active BOOLEAN DEFAULT true,
     email_verified BOOLEAN DEFAULT false,
@@ -32,6 +33,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_2fa_enabled BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_otp VARCHAR(255);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_otp_expires_at TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN DEFAULT true;
 
 -- Sessions table for refresh tokens
 CREATE TABLE IF NOT EXISTS sessions (

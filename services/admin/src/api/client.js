@@ -74,6 +74,13 @@ export const authAPI = {
     twoFADisable: (email, password) => api.post('/auth/2fa/disable', { email, password }),
 };
 
+// Notification preferences
+export const notificationsAPI = {
+    getPreferences: () => api.get('/notifications/preferences'),
+    updatePreferences: (emailNotifications) =>
+        api.put('/notifications/preferences', { emailNotifications }),
+};
+
 // Admin API
 export const adminAPI = {
     getStats: () => api.get('/analytics/dashboard'),

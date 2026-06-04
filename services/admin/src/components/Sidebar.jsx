@@ -55,13 +55,6 @@ function Sidebar() {
                     Orders
                 </Link>
                 <Link
-                    to="/admin/coupons"
-                    className={`nav-item ${isActive('/admin/coupons') ? 'active' : ''}`}
-                >
-                    <span className="nav-icon">🎟️</span>
-                    Coupons
-                </Link>
-                <Link
                     to="/admin/settings"
                     className={`nav-item ${isActive('/admin/settings') ? 'active' : ''}`}
                 >

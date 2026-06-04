@@ -124,20 +124,10 @@ BEGIN
 END $$;
 
 -- ==========================================
--- 6. COUPONS - if coupons table exists
 -- ==========================================
 DO $$
 BEGIN
-    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'coupons') THEN
-        INSERT INTO coupons (code, discount_percent, expiry_date, is_active, created_at) VALUES
-        ('WELCOME10', 10, NOW() + interval '30 days', true, NOW()),
-        ('SAVE20', 20, NOW() + interval '60 days', true, NOW()),
-        ('NEWUSER', 15, NOW() + interval '90 days', true, NOW()),
-        ('ENTERPRISE25', 25, NOW() + interval '45 days', true, NOW()),
-        ('FLASH30', 30, NOW() + interval '7 days', true, NOW()),
-        ('LOYAL15', 15, NOW() + interval '120 days', true, NOW())
-        ON CONFLICT (code) DO NOTHING;
-    END IF;
+            END IF;
 END $$;
 
 -- ==========================================
@@ -183,9 +173,6 @@ BEGIN
     END IF;
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'cart') THEN
         RAISE NOTICE 'Cart Items: %', (SELECT COUNT(*) FROM cart);
-    END IF;
-    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'coupons') THEN
-        RAISE NOTICE 'Coupons: %', (SELECT COUNT(*) FROM coupons);
     END IF;
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'inventory') THEN
         RAISE NOTICE 'Inventory: %', (SELECT COUNT(*) FROM inventory);

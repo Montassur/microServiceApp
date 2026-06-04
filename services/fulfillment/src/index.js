@@ -18,8 +18,6 @@ const shippingRoutes = require('./modules/shipping/routes');
 const initShippingModule = require('./modules/shipping/init');
 const setupShippingEvents = require('./modules/shipping/events');
 
-const couponRoutes = require('./modules/coupon/routes');
-const initCouponModule = require('./modules/coupon/init');
 
 const PORT = process.env.PORT || 3003;
 
@@ -31,7 +29,6 @@ const startServer = async () => {
 
         // 2. Initialize Modules
         await initShippingModule();
-        await initCouponModule();
 
         // 3. Setup Event Listeners
         await setupShippingEvents();
@@ -51,7 +48,7 @@ const startServer = async () => {
             res.status(200).json({
                 status: 'UP',
                 service: 'fulfillment-service',
-                modules: ['shipping', 'coupon']
+                modules: ['shipping']
             });
         });
 
@@ -67,7 +64,6 @@ const startServer = async () => {
 
         // Mount Routes
         app.use('/api/shipping', shippingRoutes);
-        app.use('/api/coupons', couponRoutes);
 
         // Start Server
         app.listen(PORT, () => {

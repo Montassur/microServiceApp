@@ -165,10 +165,6 @@ function Dashboard() {
                                 <span className="action-icon">📦</span>
                                 <span className="action-label">Add Product</span>
                             </button>
-                            <button className="action-card" onClick={() => window.location.href = '/admin/coupons'}>
-                                <span className="action-icon">🎟️</span>
-                                <span className="action-label">Add Coupon</span>
-                            </button>
                             <button className="action-card" onClick={() => window.location.href = '/admin/settings'}>
                                 <span className="action-icon">⚙️</span>
                                 <span className="action-label">Settings</span>

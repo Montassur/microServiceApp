@@ -172,15 +172,6 @@ CREATE TABLE IF NOT EXISTS shipments (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Coupons table
-CREATE TABLE IF NOT EXISTS coupons (
-    id SERIAL PRIMARY KEY,
-    code VARCHAR(50) UNIQUE NOT NULL,
-    discount_percent DECIMAL(5, 2) NOT NULL,
-    expiry_date TIMESTAMP,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT NOW()
-);
 
 -- ==========================================
 -- 6. INVENTORY SERVICE
@@ -346,7 +337,7 @@ ON CONFLICT (email) DO NOTHING;
 \echo '   • products, reviews, product_recommendations'
 \echo '   • orders, order_items, payments'
 \echo '   • cart_items, wishlists'
-\echo '   • shipments, coupons'
+\echo '   • shipments'
 \echo '   • inventory'
 \echo '   • audit_logs, analytics_events'
 \echo ''

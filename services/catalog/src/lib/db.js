@@ -11,6 +11,7 @@ const pool = new Pool({
     idleTimeoutMillis: 30000,
 });
 
+
 pool.on('error', (err) => {
     logger.error('Unexpected error on idle client', err);
     process.exit(-1);

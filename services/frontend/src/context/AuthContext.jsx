@@ -20,8 +20,9 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUser = async () => {
         try {
+            // Backend /me returns { user: {...} }
             const response = await authAPI.me();
-            setUser(response.data.data);
+            setUser(response.data.user);
         } catch (error) {
             console.error('Failed to fetch user:', error);
             localStorage.removeItem('accessToken');
@@ -34,22 +35,23 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         const response = await authAPI.login({ email, password });
         const { user, token } = response.data;
-        const accessToken = token;
-        const refreshToken = token; // Temporary fallback as backend doesn't send refresh token yet
 
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('refreshToken', token); // refresh token not yet implemented
         setUser(user);
 
         return user;
     };
 
     const signup = async (email, password, firstName, lastName) => {
-        const response = await authAPI.signup({ email, password, firstName, lastName });
-        const { user, accessToken, refreshToken } = response.data.data;
+        // Backend expects a single `name`; combine first/last from the form.
+        const name = [firstName, lastName].filter(Boolean).join(' ').trim() || email;
+        const response = await authAPI.signup({ email, password, name });
+        const { user, token } = response.data;
 
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+        // Auto-login: persist the token from /register and set the user.
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('refreshToken', token);
         setUser(user);
 
         return user;

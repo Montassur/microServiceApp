@@ -20,11 +20,12 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUser = async () => {
         try {
+            // Backend /me returns { user: {...} }
             const response = await authAPI.me();
-            const userData = response.data.data;
+            const userData = response.data.user;
 
             // Verify user is admin
-            if (userData.role !== 'admin') {
+            if (!userData || userData.role !== 'admin') {
                 throw new Error('Access denied: Admin role required');
             }
 

@@ -7,27 +7,33 @@ const logger = require('../../lib/logger');
 const { getChannel } = require('../../lib/rabbitmq');
 
 // POST /api/auth/register
-// POST /api/auth/register
-// POST /api/auth/register
 const registerHandler = async (req, res) => {
     const { email, password, name } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const result = await pool.query(
-            'INSERT INTO users (email, password_hash, name, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, email, name',
+            'INSERT INTO users (email, password_hash, name, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, email, name, role',
             [email, hashedPassword, name]
         );
 
         const user = result.rows[0];
 
-        // Publish Event
-        const channel = getChannel();
-        if (channel) {
-            channel.sendToQueue('USER_CREATED', Buffer.from(JSON.stringify(user)));
+        // Sign a JWT immediately so the client can auto-login
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+
+        // Publishing the event is best-effort. If RabbitMQ is briefly unavailable
+        // we still consider registration successful — the user is in the DB.
+        try {
+            const channel = getChannel();
+            if (channel) {
+                channel.sendToQueue('USER_CREATED', Buffer.from(JSON.stringify(user)));
+            }
+        } catch (mqErr) {
+            logger.warn('Failed to publish USER_CREATED event (non-fatal)', mqErr);
         }
 
-        res.status(201).json(user);
+        res.status(201).json({ user, token });
     } catch (err) {
         logger.error('Error registering user', err);
         res.status(500).json({ error: 'Registration failed' });
@@ -63,19 +69,25 @@ router.get('/me', async (req, res) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-        const result = await pool.query('SELECT id, email, first_name, last_name, role FROM users WHERE id = $1', [decoded.userId]);
+        const result = await pool.query(
+            'SELECT id, email, name, first_name, last_name, role FROM users WHERE id = $1',
+            [decoded.userId]
+        );
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const user = result.rows[0];
+        const u = result.rows[0];
+        // Prefer the single `name` column (set by /register) over first/last.
+        const displayName = u.name || [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
+
         res.json({
             user: {
-                id: user.id,
-                email: user.email,
-                name: `${user.first_name} ${user.last_name}`,
-                role: user.role
+                id: u.id,
+                email: u.email,
+                name: displayName,
+                role: u.role
             }
         });
     } catch (err) {

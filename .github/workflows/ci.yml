@@ -132,6 +132,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Frontend needs the Stripe publishable key inlined at build time
+          # (Vite reads VITE_* env vars at build, not runtime). Other services
+          # ignore this build-arg.
+          build-args: |
+            VITE_STRIPE_PUBLIC_KEY=${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
 
   k8s-validate:
     name: Validate K8s overlays

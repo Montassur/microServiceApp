@@ -3,6 +3,18 @@ const router = express.Router();
 const redisClient = require('../../lib/redis');
 const logger = require('../../lib/logger');
 
+// Compute the running total for a cart object so the frontend always
+// receives { items, total } and never has to sum prices itself.
+const withTotal = (cart) => {
+    const items = cart?.items || [];
+    const total = items.reduce((sum, it) => {
+        const price = Number(it.price) || 0;
+        const qty = Number(it.quantity) || 0;
+        return sum + price * qty;
+    }, 0);
+    return { items, total: Number(total.toFixed(2)) };
+};
+
 // GET /api/cart (Info)
 router.get('/', (req, res) => {
     res.json({ message: 'Cart Endpoint. Use GET /:userId to fetch a cart.' });
@@ -25,7 +37,7 @@ router.post('/', async (req, res) => {
         }
 
         await redisClient.set(cacheKey, JSON.stringify(cart));
-        res.json(cart);
+        res.json(withTotal(cart));
     } catch (err) {
         logger.error('Error updating cart', err);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -38,7 +50,7 @@ router.get('/:userId', async (req, res) => {
     try {
         const cacheKey = `cart:${userId}`;
         const cart = JSON.parse(await redisClient.get(cacheKey)) || { items: [] };
-        res.json(cart);
+        res.json(withTotal(cart));
     } catch (err) {
         logger.error('Error fetching cart', err);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -52,10 +64,11 @@ router.delete('/:userId/item/:productId', async (req, res) => {
         const cacheKey = `cart:${userId}`;
         let cart = JSON.parse(await redisClient.get(cacheKey)) || { items: [] };
 
-        cart.items = cart.items.filter(item => item.productId !== productId);
+        // Allow both string and numeric productId in the URL — coerce both sides.
+        cart.items = cart.items.filter(item => String(item.productId) !== String(productId));
         await redisClient.set(cacheKey, JSON.stringify(cart));
 
-        res.json(cart);
+        res.json(withTotal(cart));
     } catch (err) {
         logger.error('Error removing item from cart', err);
         res.status(500).json({ error: 'Internal Server Error' });

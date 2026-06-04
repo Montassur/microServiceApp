@@ -124,7 +124,7 @@ jobs:
             type=sha,prefix=sha-
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./services/${{ matrix.service }}
           push: true
@@ -132,6 +132,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # provenance attestation adds extra OCI artifacts that occasionally
+          # exceed buildx's layer-upload deadline on flaky GHCR connections.
+          # Disable it to keep pushes lean.
+          provenance: false
+          sbom: false
           # Frontend needs the Stripe publishable key inlined at build time
           # (Vite reads VITE_* env vars at build, not runtime). Other services
           # ignore this build-arg.

@@ -114,11 +114,18 @@ CREATE TABLE IF NOT EXISTS payments (
     id SERIAL PRIMARY KEY,
     order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     amount DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'usd',
     payment_method VARCHAR(50),
     status VARCHAR(50) DEFAULT 'PENDING',
     transaction_id VARCHAR(255),
+    stripe_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Forward-compat: existing DBs from older init.sql also pick up the columns
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS currency VARCHAR(3) DEFAULT 'usd';
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS stripe_id VARCHAR(255);
+CREATE INDEX IF NOT EXISTS idx_payments_stripe_id ON payments(stripe_id);
 
 -- ==========================================
 -- 4. SHOPPING SERVICE

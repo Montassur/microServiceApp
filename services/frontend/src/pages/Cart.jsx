@@ -1,6 +1,5 @@
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI } from '../api/orders';
 import { Link, useNavigate } from 'react-router-dom';
 import './Products.css';
 
@@ -9,27 +8,13 @@ function Cart() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    const handleCheckout = async () => {
+    const handleCheckout = () => {
         if (!user) {
-            alert('Please login to checkout');
+            navigate('/login');
             return;
         }
-
-        try {
-            const orderData = {
-                userId: user.id,
-                products: cart.items,
-                totalAmount: cart.total
-            };
-
-            await orderAPI.createOrder(orderData);
-            await clearCart();
-            alert('Order placed successfully!');
-            navigate('/orders'); // Assuming Orders page exists
-        } catch (error) {
-            console.error('Checkout failed', error);
-            alert('Failed to place order. Please try again.');
-        }
+        // Order creation + Stripe payment happen on the Checkout page
+        navigate('/checkout');
     };
 
     if (loading) return <div className="loading-container">Loading cart...</div>;

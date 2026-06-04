@@ -13,6 +13,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Orders from './pages/Orders';
+import Checkout from './pages/Checkout';
 import './index.css';
 
 function App() {
@@ -51,6 +52,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Orders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/checkout"
+                element={
+                  <ProtectedRoute>
+                    <Checkout />
                   </ProtectedRoute>
                 }
               />

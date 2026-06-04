@@ -11,12 +11,16 @@ router.post('/', async (req, res) => {
 
     try {
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: amount * 100,
+            amount: Math.round(amount * 100),
             currency: currency || 'usd',
             payment_method: token,
             description: `Payment for Order #${orderId}`,
             confirm: true,
-            return_url: `https://example.com/checkout/complete`
+            // metadata is echoed back on every webhook event for this PI —
+            // we use it in webhook.js to find which order to mark PAID.
+            metadata: { orderId: String(orderId) },
+            // Disable redirect-based methods (3DS) for a clean test-card flow.
+            automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
         });
 
         const status = paymentIntent.status === 'succeeded' ? 'COMPLETED' : 'FAILED';

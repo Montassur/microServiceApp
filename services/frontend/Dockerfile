@@ -6,13 +6,17 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 # Install dependencies first (Caching layer)
-# Copying package files separately allows Docker to cache npm install
-# if dependencies haven't changed, even if source code has.
 COPY package*.json ./
-RUN npm ci --silent
+# Use npm install (not ci) so newly added deps don't require a fresh lockfile.
+RUN npm install --no-audit --no-fund --silent
 
 # Build source
 COPY . .
+
+# Vite reads VITE_* env vars at build time and inlines them into the bundle.
+# Passed by docker-compose / CI via --build-arg.
+ARG VITE_STRIPE_PUBLIC_KEY
+ENV VITE_STRIPE_PUBLIC_KEY=$VITE_STRIPE_PUBLIC_KEY
 RUN npm run build
 
 # ==========================================

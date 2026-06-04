@@ -19,6 +19,7 @@ const initOrderModule = require('./modules/order/init');
 const setupOrderEvents = require('./modules/order/events');
 
 const paymentRoutes = require('./modules/payment/routes');
+const paymentWebhook = require('./modules/payment/webhook');
 const initPaymentModule = require('./modules/payment/init');
 
 const PORT = process.env.PORT || 3002;
@@ -42,6 +43,15 @@ const startServer = async () => {
         // Middleware
         app.use(helmet());
         app.use(cors());
+
+        // STRIPE WEBHOOK — must be mounted BEFORE express.json() because
+        // Stripe signs the raw bytes; once JSON-parsed the signature breaks.
+        app.use(
+            '/api/payments/webhook',
+            express.raw({ type: 'application/json' }),
+            paymentWebhook
+        );
+
         app.use(express.json());
         app.use(morgan('combined'));
         app.use(metricsMiddleware);

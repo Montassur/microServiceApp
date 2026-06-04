@@ -85,7 +85,11 @@ services:
   
   # Frontend - Customer-facing application
   frontend:
-    build: ./services/frontend
+    build:
+      context: ./services/frontend
+      args:
+        # Stripe publishable key — Vite inlines it into the bundle at build time
+        VITE_STRIPE_PUBLIC_KEY: ${VITE_STRIPE_PUBLIC_KEY:-pk_test_unset}
     image: frontend:latest
     container_name: frontend
     ports:
@@ -226,6 +230,7 @@ services:
       - DB_PASSWORD=password
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3002/health"]
       interval: 30s

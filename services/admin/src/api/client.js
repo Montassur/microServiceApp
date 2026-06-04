@@ -65,7 +65,13 @@ api.interceptors.response.use(
 export const authAPI = {
     login: (data) => api.post('/auth/login', data),
     logout: (refreshToken) => api.post('/auth/logout', { refreshToken }),
-    me: () => api.get('/auth/me')
+    me: () => api.get('/auth/me'),
+
+    // 2FA
+    twoFAStatus: () => api.get('/auth/2fa/status'),
+    twoFARequest: (email) => api.post('/auth/2fa/request', { email }),
+    twoFAVerify: (email, code) => api.post('/auth/2fa/verify', { email, code }),
+    twoFADisable: (email, password) => api.post('/auth/2fa/disable', { email, password }),
 };
 
 // Admin API

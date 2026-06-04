@@ -41,19 +41,34 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         const response = await authAPI.login({ email, password });
-        const { user, token } = response.data;
-        const accessToken = token;
-        const refreshToken = token; // Temporary fallback
+        const data = response.data;
 
-        // Verify user is admin
+        // If backend says 2FA is on, do NOT complete login here.
+        // Return a sentinel so the Login page can prompt for the OTP.
+        if (data.needs_2fa) {
+            return { needs2fa: true, email: data.email || email };
+        }
+
+        const { user, token } = data;
         if (user.role !== 'admin') {
             throw new Error('Access denied: Admin role required');
         }
-
-        localStorage.setItem('adminAccessToken', accessToken);
-        localStorage.setItem('adminRefreshToken', refreshToken);
+        localStorage.setItem('adminAccessToken', token);
+        localStorage.setItem('adminRefreshToken', token);
         setUser(user);
+        return user;
+    };
 
+    // Completes login after the user enters the 6-digit OTP.
+    // The /api/auth/2fa/verify response shape is identical to /login on success.
+    const completeLoginWith2FA = (data) => {
+        const { user, token } = data;
+        if (user.role !== 'admin') {
+            throw new Error('Access denied: Admin role required');
+        }
+        localStorage.setItem('adminAccessToken', token);
+        localStorage.setItem('adminRefreshToken', token);
+        setUser(user);
         return user;
     };
 
@@ -76,6 +91,7 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         login,
+        completeLoginWith2FA,
         logout,
         isAuthenticated: !!user && user.role === 'admin'
     };

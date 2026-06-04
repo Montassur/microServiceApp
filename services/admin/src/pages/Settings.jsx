@@ -1,10 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../api/client';
+import OTPModal from '../components/OTPModal';
 import './Settings.css';
 
 function Settings() {
     const toast = useToast();
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('general');
+
+    // 2FA state
+    const [twofaEnabled, setTwofaEnabled] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [twofaRequesting, setTwofaRequesting] = useState(false);
+
+    // Load 2FA status when the security tab is opened
+    useEffect(() => {
+        if (activeTab !== 'security') return;
+        const load = async () => {
+            try {
+                const res = await authAPI.twoFAStatus();
+                setTwofaEnabled(!!res.data.enabled);
+            } catch (e) {
+                console.error('Failed to load 2FA status', e);
+            }
+        };
+        load();
+    }, [activeTab]);
+
+    const handleEnable2FA = async () => {
+        if (!user?.email) {
+            toast.error('No email on account');
+            return;
+        }
+        setTwofaRequesting(true);
+        try {
+            await authAPI.twoFARequest(user.email);
+            toast.success(`Code sent to ${user.email}`);
+            setShowOtpModal(true);
+        } catch (err) {
+            toast.error(err?.response?.data?.error || 'Could not send code');
+        } finally {
+            setTwofaRequesting(false);
+        }
+    };
+
+    const handleDisable2FA = async () => {
+        const password = window.prompt('Enter your password to disable 2FA:');
+        if (!password) return;
+        try {
+            await authAPI.twoFADisable(user.email, password);
+            setTwofaEnabled(false);
+            toast.success('2FA disabled');
+        } catch (err) {
+            toast.error(err?.response?.data?.error || 'Could not disable 2FA');
+        }
+    };
+
+    const onVerifySuccess = () => {
+        setShowOtpModal(false);
+        setTwofaEnabled(true);
+        toast.success('Two-factor authentication enabled');
+    };
     const [settings, setSettings] = useState({
         siteName: 'Ecommerce Admin',
         siteUrl: 'https://admin.ecommerce.com',
@@ -15,7 +73,6 @@ function Settings() {
         theme: 'dark',
         emailNotifications: true,
         pushNotifications: false,
-        weeklyReports: true,
     });
 
     const handleSave = () => {
@@ -62,12 +119,6 @@ function Settings() {
                     onClick={() => setActiveTab('notifications')}
                 >
                     🔔 Notifications
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'api' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('api')}
-                >
-                    🔑 API Keys
                 </button>
             </div>
 
@@ -171,10 +222,20 @@ function Settings() {
 
                         <div className="card">
                             <h3>Two-Factor Authentication</h3>
-                            <p className="card-description">Add an extra layer of security to your account</p>
-                            <button className="btn" onClick={() => toast.info('2FA setup coming soon')}>
-                                Enable 2FA
-                            </button>
+                            <p className="card-description">
+                                {twofaEnabled
+                                    ? 'Two-factor authentication is active on your account. A code will be emailed on every login.'
+                                    : 'Receive a 6-digit code by email each time you log in. Adds an extra layer of security.'}
+                            </p>
+                            {twofaEnabled ? (
+                                <button className="btn" onClick={handleDisable2FA}>
+                                    Disable 2FA
+                                </button>
+                            ) : (
+                                <button className="btn btn-primary" onClick={handleEnable2FA} disabled={twofaRequesting}>
+                                    {twofaRequesting ? 'Sending code…' : 'Enable 2FA'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
@@ -214,42 +275,10 @@ function Settings() {
                                     </label>
                                 </div>
 
-                                <div className="toggle-item">
-                                    <div>
-                                        <div className="toggle-label">Weekly Reports</div>
-                                        <div className="toggle-description">Receive weekly summary reports</div>
-                                    </div>
-                                    <label className="toggle-switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={settings.weeklyReports}
-                                            onChange={(e) => handleChange('weeklyReports', e.target.checked)}
-                                        />
-                                        <span className="toggle-slider"></span>
-                                    </label>
-                                </div>
                             </div>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'api' && (
-                    <div className="settings-section">
-                        <div className="card">
-                            <h3>API Keys</h3>
-                            <p className="card-description">Manage your API keys for external integrations</p>
-                            <div className="api-key-item">
-                                <div className="api-key-info">
-                                    <div className="api-key-name">Production API Key</div>
-                                    <code className="api-key-value">ak_prod_••••••••••••••••</code>
-                                </div>
-                                <button className="btn btn-sm" onClick={() => toast.info('API key copied to clipboard')}>
-                                    📋 Copy
-                                </button>
-                            </div>
-                            <button className="btn btn-primary" onClick={() => toast.success('New API key generated!')}>
-                                ➕ Generate New Key
-                            </button>
+                            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: '12px' }}>
+                                Notifications service required for these toggles to take effect.
+                            </p>
                         </div>
                     </div>
                 )}
@@ -264,6 +293,16 @@ function Settings() {
                     Save Changes
                 </button>
             </div>
+
+            {showOtpModal && (
+                <OTPModal
+                    email={user.email}
+                    title="Confirm 2FA enrollment"
+                    onSuccess={onVerifySuccess}
+                    onClose={() => setShowOtpModal(false)}
+                    onResend={() => toast.info('New code sent')}
+                />
+            )}
         </div>
     );
 }

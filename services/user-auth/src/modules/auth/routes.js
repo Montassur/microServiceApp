@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../../lib/db');
 const logger = require('../../lib/logger');
 const { getChannel } = require('../../lib/rabbitmq');
+const { sendMail } = require('../../lib/mailer');
 
 // POST /api/auth/register
 const registerHandler = async (req, res) => {
@@ -52,6 +54,31 @@ router.post('/login', async (req, res) => {
 
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
             return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // If 2FA is enabled, do NOT issue a token yet. Generate + email a
+        // 6-digit code; the client must POST /api/auth/2fa/verify next.
+        if (user.is_2fa_enabled) {
+            const otp = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+            const otpHash = await bcrypt.hash(otp, 8);
+            const expiresAt = new Date(Date.now() + 10 * 60_000);
+            await pool.query(
+                'UPDATE users SET email_otp = $1, email_otp_expires_at = $2 WHERE id = $3',
+                [otpHash, expiresAt, user.id]
+            );
+            try {
+                await sendMail({
+                    to: user.email,
+                    subject: 'Your Ecommerce login verification code',
+                    text: `Your code is ${otp}\n\nIt expires in 10 minutes.`,
+                    html: `<p>Your login verification code is:</p>
+                           <p style="font-size:28px;letter-spacing:6px;font-weight:700;">${otp}</p>
+                           <p style="color:#666">Expires in 10 minutes.</p>`,
+                });
+            } catch (e) {
+                logger.warn('Failed to send 2FA OTP email (non-fatal)', e.message);
+            }
+            return res.json({ needs_2fa: true, email: user.email });
         }
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });

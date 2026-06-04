@@ -290,6 +290,12 @@ services:
       - REDIS_HOST=redis
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - JWT_SECRET=secret
+      # SMTP for 2FA codes and transactional email
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 30s

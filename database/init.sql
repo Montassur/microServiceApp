@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     name VARCHAR(255),
+    is_2fa_enabled BOOLEAN DEFAULT false,
+    email_otp VARCHAR(255),
+    email_otp_expires_at TIMESTAMP,
     role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin', 'editor')),
     is_active BOOLEAN DEFAULT true,
     email_verified BOOLEAN DEFAULT false,
@@ -26,6 +29,9 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Forward-compat: existing DBs from older init.sql also get the column
 ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_2fa_enabled BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_otp VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_otp_expires_at TIMESTAMP;
 
 -- Sessions table for refresh tokens
 CREATE TABLE IF NOT EXISTS sessions (

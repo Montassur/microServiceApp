@@ -15,6 +15,7 @@ const metricsMiddleware = require('./middleware/metrics');
 
 // Modules
 const authRoutes = require('./modules/auth/routes');
+const twofaRoutes = require('./modules/auth/twofa');
 const initAuthModule = require('./modules/auth/init');
 
 const notificationRoutes = require('./modules/notification/routes');
@@ -67,10 +68,8 @@ const startServer = async () => {
 
         // Mount Routes
         app.use('/api/auth', authRoutes);
+        app.use('/api/auth', twofaRoutes);          // /api/auth/2fa/...
         app.use('/api/notifications', notificationRoutes);
-        app.use('/api/users', require('./modules/users/routes'));
-        app.use('/api/users', require('./modules/users/routes'));
-        app.use('/api/users', require('./modules/users/routes'));
         app.use('/api/users', require('./modules/users/routes'));
 
         // Start Server
